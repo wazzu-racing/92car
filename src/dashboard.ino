@@ -6,22 +6,15 @@
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
 #include "Selector.h"
 #include "Display.h"
+#include "pins.h"
 
 // SETTINGS =============================================================================================================================================================
-bool is_dashboard = false;
 const int WRITE_FREQ = 10; // ms
-const int DATA_SWITCH = 28;
-const int STATUS_A = 12;
-const int STATUS_B = 11;
-const int STATUS_C = 10;
-const int STATUS_D = 9;
-const int SELECTOR_PINS[] = {35, 36, 37, 38, 39, 40};
 
 // INSTANCES ============================================================================================================================================================
 Bmi088Accel accel(Wire,0x18);
 Bmi088Gyro gyro(Wire,0x68);
 SFE_UBLOX_GNSS myGNSS;
-Selector selector(SELECTOR_PINS);
 MegaSquirt3 ecu;
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can;
 Adafruit_7segment matrix1 = Adafruit_7segment();
@@ -33,11 +26,19 @@ ROW tosend;
 // GLOBAL VARS ==========================================================================================================================================================
 int re;
 uint32_t lastwrite = 0;
+uint32_t lastwritelora = 0;
 int mode = 0;
 int mode_bounces = 0;
 bool offset;
+bool is_dashboard = false;
 
 int TEST = 0;
+
+struct test_send {
+  int time = 0;
+};
+
+struct test_send testsend;
 
 void openfile(String filename) {
   // Serial.println(filename);
@@ -57,17 +58,17 @@ void handler(const CAN_message_t &msg) {
   // Serial.print("data switch: ");
   // Serial.println(digitalRead(DATA_SWITCH));
 
-  if ((digitalRead(DATA_SWITCH)==HIGH) != is_logging) {
-    // Serial.println(is_logging_bounce);
-    if (is_logging_bounce++ > 40) {
-      is_logging = !is_logging;
-      if (is_logging) openfile("new");
-      is_logging_bounce = 0;
-    }
-  }
+  // if ((digitalRead(DATA_SWITCH)==HIGH) != is_logging) {
+  //   // Serial.println(is_logging_bounce);
+  //   if (is_logging_bounce++ > 40) {
+  //     is_logging = !is_logging;
+  //     if (is_logging) openfile("new");
+  //     is_logging_bounce = 0;
+  //   }
+  // }
   offset = !offset;
   if (!is_dashboard) {
-    digitalWrite(STATUS_D, offset ? HIGH : LOW);
+    digitalWrite(TEENSY_PIN_LED_3, offset ? HIGH : LOW);
   }
   //  Serial.println("message");
    // log directly wired sensors:
@@ -96,7 +97,7 @@ void handler(const CAN_message_t &msg) {
     //   Serial.print("-");tosend.ground_speed = myGNSS.getGroundSpeed();	
     //   Serial.print("-");tosend.gps_millis = millis();
     //  }
-     Serial.print("done\n");
+    //  Serial.print("done\n");
    }
 
     // ecu.data.rpm = 90;
@@ -206,92 +207,95 @@ void handler(const CAN_message_t &msg) {
     if (!is_dashboard && millis() > lastwrite + WRITE_FREQ) {
       tosend.write_millis = millis();
       file.write((byte*) &tosend, sizeof(tosend));
-      int ti = millis();
-      Serial8.write((byte*) &(ti), sizeof(ti));
-      Serial.printf("sent %d bytes to LoRa...\n", sizeof(ti));
-      Serial8.printf("\n\n\n");
-      // file.write("END\n");
+
       file.flush();
-      Serial8.flush();
       // Serial.print("WROTE ############################################################## ");
-      Serial.println(millis());
+      // Serial.println(millis());
       lastwrite = millis();
+    }
+    // printf("%d\n", lastwritelora + 1000);
+    if (!is_dashboard && millis() > lastwritelora + 200) {
+      testsend.time = millis();
+      Serial8.write((byte*) &tosend, sizeof(tosend));
+      Serial8.print("\n\n\n");
+      Serial.printf("sent bytes to LoRa...\n");
+      lastwritelora = millis();
     }
   }
 
   String MODE_NAMES[] = {"0    OFF", "GO COUGS", "1   NORN", "2    RPN", "3   CLNt", "4   OIL ", "5   BRAC"};
 
-  if (is_dashboard) {
-    int newmode = selector.get();
-    // Serial.print("newmode: ");
-    // Serial.print(newmode);
-    // Serial.print(", ");
-    // Serial.println(millis());
-    if (newmode != mode) {
-      mode_bounces++;
-      if (mode_bounces > 70) {
-        mode = newmode;
-        mode_bounces = 0;
-        displayText(MODE_NAMES[mode], matrix1, matrix2);
-        delay(800);
-      }
-    }
+  // if (is_dashboard) {
+  //   int newmode = selector.get();
+  //   // Serial.print("newmode: ");
+  //   // Serial.print(newmode);
+  //   // Serial.print(", ");
+  //   // Serial.println(millis());
+  //   if (newmode != mode) {
+  //     mode_bounces++;
+  //     if (mode_bounces > 70) {
+  //       mode = newmode;
+  //       mode_bounces = 0;
+  //       displayText(MODE_NAMES[mode], matrix1, matrix2);
+  //       delay(800);
+  //     }
+  //   }
 
 
-    switch (mode) {
-      case 0:
-        // off
-        off(matrix1, matrix2);
-        break;
-      case 1:
-        // standby
-        displayText("GO COUGS", matrix1, matrix2);
-        lightSequence(); // non blocking
-        break;
-      // case 1:
-      //   // mph
-      //   // displayInt(round(tosend.ground_speed/ 447.04), matrix1, matrix2);
-      //   displayInt(tosend., matrix1, matrix2);
-      //   set_rpm(ecu.data.rpm);
-      //   break;
-      case 2:
-        // standard running
-        if (!carIsOn() || !displaying(ecu, matrix1, matrix2)) {
-          set_rpm(ecu.data.rpm);
-          displayInt(ecu.data.rpm, matrix1, matrix2);
-        }
-        break;
-      case 3:
-        // rpm only
-        displayInt(ecu.data.rpm, matrix1, matrix2);
-        set_rpm(ecu.data.rpm);
-        break;
-      case 4:
-        // coolant temp
-        displayInt(ecu.data.clt, matrix1, matrix2);
-        set_rpm(ecu.data.rpm);
-        break;
-      case 5:
-        // oil pressure
-        displayInt(ecu.data.sensors1, matrix1, matrix2);
-        set_rpm(ecu.data.rpm);
-        break;
-      case 6:
-        // brake pressure
-        // matrix1.printNumber(5000*((tosend.brake1-0.1)/0.8));
-        // matrix2.printNumber(5000*((tosend.brake2-0.1)/0.8));
-        // matrix1.writeDisplay();
-        if (((int)floor(millis()/150)) % 2) {
-          brakepressure(tosend.brake1, tosend.brake2, matrix1, matrix2);
-        }
-        // Serial.println(5000*((tosend.brake2-0.1)/0.8));
-        // matrix2.writeDisplay();
-        set_rpm(ecu.data.rpm);
-        break;
-      default:
-        break;
-    }
-  }
+  //   switch (mode) {
+  //     case 0:
+  //       // off
+  //       off(matrix1, matrix2);
+  //       break;
+  //     case 1:
+  //       // standby
+  //       displayText("GO COUGS", matrix1, matrix2);
+  //       lightSequence(); // non blocking
+  //       break;
+  //     // case 1:
+  //     //   // mph
+  //     //   // displayInt(round(tosend.ground_speed/ 447.04), matrix1, matrix2);
+  //     //   displayInt(tosend., matrix1, matrix2);
+  //     //   set_rpm(ecu.data.rpm);
+  //     //   break;
+  //     case 2:
+  //       // standard running
+  //       if (!carIsOn() || !displaying(ecu, matrix1, matrix2)) {
+  //         set_rpm(ecu.data.rpm);
+  //         displayInt(ecu.data.rpm, matrix1, matrix2);
+  //       }
+  //       break;
+  //     case 3:
+  //       // rpm only
+  //       displayInt(ecu.data.rpm, matrix1, matrix2);
+  //       set_rpm(ecu.data.rpm);
+  //       break;
+  //     case 4:
+  //       // coolant temp
+  //       displayInt(ecu.data.clt, matrix1, matrix2);
+  //       set_rpm(ecu.data.rpm);
+  //       break;
+  //     case 5:
+  //       // oil pressure
+  //       displayInt(ecu.data.sensors1, matrix1, matrix2);
+  //       set_rpm(ecu.data.rpm);
+  //       break;
+  //     case 6:
+  //       // brake pressure
+  //       // matrix1.printNumber(5000*((tosend.brake1-0.1)/0.8));
+  //       // matrix2.printNumber(5000*((tosend.brake2-0.1)/0.8));
+  //       // matrix1.writeDisplay();
+  //       if (((int)floor(millis()/150)) % 2) {
+  //         brakepressure(tosend.brake1, tosend.brake2, matrix1, matrix2);
+  //       }
+  //       // Serial.println(5000*((tosend.brake2-0.1)/0.8));
+  //       // matrix2.writeDisplay();
+  //       set_rpm(ecu.data.rpm);
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // }
 }
 
 // SETUP ================================================================================================================================================================
@@ -303,29 +307,29 @@ void setup() {
 
   if (is_dashboard) {
 
-    pinMode(DATA_SWITCH, INPUT_PULLDOWN);
+    // pinMode(DATA_SWITCH, INPUT_PULLDOWN);
     for (int i = 0; i < 14; i++) {
       pinMode(ALL_LEDS[i], OUTPUT);
     }
     pinMode(CHECK_ENGINE, OUTPUT);
-    selector.initialize();
+    // selector.initialize();
     startsequence(matrix1, matrix2);
   } else {
-    pinMode(STATUS_A, OUTPUT);
-    digitalWrite(STATUS_A, LOW);
-    pinMode(STATUS_B, OUTPUT);
-    digitalWrite(STATUS_B, LOW);
-    pinMode(STATUS_C, OUTPUT);
-    digitalWrite(STATUS_C, LOW);
-    pinMode(STATUS_D, OUTPUT);
-    digitalWrite(STATUS_D, LOW);
+    pinMode(TEENSY_PIN_LED_0, OUTPUT);
+    digitalWrite(TEENSY_PIN_LED_0, LOW);
+    pinMode(TEENSY_PIN_LED_1, OUTPUT);
+    digitalWrite(TEENSY_PIN_LED_1, LOW);
+    pinMode(TEENSY_PIN_LED_3, OUTPUT);
+    digitalWrite(TEENSY_PIN_LED_3, LOW);
+    pinMode(TEENSY_PIN_LED_3, OUTPUT);
+    digitalWrite(TEENSY_PIN_LED_3, LOW);
 
 
     if (!SD.begin(BUILTIN_SDCARD)) {
       Serial.println(F("SD CARD FAILED, OR NOT PRESENT!"));
       while(1);
     }
-    digitalWrite(STATUS_A, HIGH);
+    digitalWrite(TEENSY_PIN_LED_0, HIGH);
 
     Serial.println("@@@@@@@@@@@@@@@@@@");
     accel.begin();
@@ -339,7 +343,7 @@ void setup() {
       Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. Freezing."));
       while (1);
     }
-    digitalWrite(STATUS_B, HIGH);
+    digitalWrite(TEENSY_PIN_LED_1, HIGH);
 
     myGNSS.checkUblox();
     // file = SD.open("x", FILE_WRITE);
@@ -365,9 +369,9 @@ void setup() {
 void loop(){
   // Serial.println(millis());
   if (!is_dashboard) {
-    digitalWrite(STATUS_A, HIGH);
-    digitalWrite(STATUS_B, HIGH);
-    digitalWrite(STATUS_C, HIGH);
+    digitalWrite(TEENSY_PIN_LED_0, HIGH);
+    digitalWrite(TEENSY_PIN_LED_1, HIGH);
+    digitalWrite(TEENSY_PIN_LED_3, HIGH);
   }
   CAN_message_t a;
   // handler(a);
