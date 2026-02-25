@@ -1,5 +1,12 @@
-#ifndef PINS_H
-#define PINS_H
+#pragma once
+
+#define ANALOGX_0_CAN_ID            0xE4600
+#define ANALOGX_1_CAN_ID            0xE4700
+#define ANALOGX_2_CAN_ID            0xE4800
+#define ANALOGX_3_CAN_ID            0xE4900
+
+#define ECU_BASE_CAN_ID             0x0
+
 
 #define TEENSY_PIN_GENERIC_0        0
 #define TEENSY_PIN_GENERIC_1        1
@@ -24,8 +31,8 @@
 #define TEENSY_PIN_GYRO_INTERRUPT   20
 #define TEENSY_PIN_ACEL_INTERRUPT   21
 
-#define TEENSY_PIN_CAN_ECU_TX       22 // CAN
-#define TEENSY_PIN_CAN_ECU_RX       23 // CAN
+#define TEENSY_PIN_CAN_ECU_TX       22 // CAN 1
+#define TEENSY_PIN_CAN_ECU_RX       23 // CAN 1
 #define TEENSY_CAN_ECU              CAN1
 
 #define TEENSY_PIN_GPS_SCL          24
@@ -34,8 +41,8 @@
 #define TEENSY_PIN_GENERIC_27       27
 #define TEENSY_PIN_LED_0            28
 #define TEENSY_PIN_LED_1            29
-#define TEENSY_PIN_CAN_SENSOR_RX    30 // CAN
-#define TEENSY_PIN_CAN_SENSOR_TX    31 // CAN
+#define TEENSY_PIN_CAN_SENSOR_RX    30 // CAN 3
+#define TEENSY_PIN_CAN_SENSOR_TX    31 // CAN 3
 #define TEENSY_CAN_SENSOR           CAN3
 
 //      EMPTY EMPTY EMPTY EMPTY     32
@@ -49,5 +56,3 @@
 #define TEENSY_PIN_GENERIC_40       40
 #define TEENSY_PIN_GPS_INTERRUPT    41
 
-
-#endif
