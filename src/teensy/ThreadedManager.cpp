@@ -1,6 +1,7 @@
 #include "ThreadedManager.hpp"
 
 void ThreadedManager::runner(void* arg) {
+    Serial.println("runner...");
     ThreadedManager* self = static_cast<ThreadedManager*>(arg);
     while (self->KEEP_RUNNING) {
         self->loop();
@@ -9,6 +10,7 @@ void ThreadedManager::runner(void* arg) {
 }
 
 void ThreadedManager::start() {
+    this->KEEP_RUNNING = true;
     this->setup();
     threads.addThread(runner, this);
 }

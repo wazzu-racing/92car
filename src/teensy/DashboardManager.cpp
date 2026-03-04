@@ -5,5 +5,6 @@ void DashboardManager::setup() {
 }
 
 void DashboardManager::loop() {
-
+    threads.delay(1000);
+    Serial.println("Dashboard...");
 }

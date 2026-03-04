@@ -2,8 +2,11 @@
 #include <TeensyThreads.h>
 #include <Arduino.h>
 
-ThreadWrap(Serial, SerialXtra);
-#define Serial ThreadClone(SerialXtra)
+// #ifndef WRAPPED_SERIAL_
+// #define WRAPPED_SERIAL_
+// ThreadWrap(Serial, SerialXtra);
+// // #define Serial ThreadClone(SerialXtra)
+// #endif
 
 class ThreadedManager {
     volatile bool KEEP_RUNNING;
