@@ -37,6 +37,8 @@
 
 #define TEENSY_PIN_GPS_SCL          24
 #define TEENSY_PIN_GPS_SDA          25
+#define TEENSY_GPS_WIRE             Wire2
+
 #define TEENSY_PIN_GENERIC_26       26
 #define TEENSY_PIN_GENERIC_27       27
 #define TEENSY_PIN_LED_0            28

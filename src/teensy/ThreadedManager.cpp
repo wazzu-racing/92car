@@ -9,10 +9,18 @@ void ThreadedManager::runner(void* arg) {
     }
 }
 
-void ThreadedManager::start() {
+void ThreadedManager::start(std::string logname) {
+    this->logname_ = logname;
     this->KEEP_RUNNING = true;
     this->setup();
     threads.addThread(runner, this);
+}
+
+void ThreadedManager::log(std::string data) {
+    Serial.print("[");
+    Serial.print(this->logname_.c_str());
+    Serial.print("]\t");
+    Serial.println(data.c_str());
 }
 
 void ThreadedManager::stop() {

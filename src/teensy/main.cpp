@@ -21,10 +21,10 @@ void setup() {
   pinMode(TEENSY_PIN_LED_2, OUTPUT);
   pinMode(TEENSY_PIN_LED_3, OUTPUT);
 
-  dashboardManager.start();
-  dataloggerManager.start();
-  sensorManager.start();
-  ethernetManager.start();
+  // dashboardManager.start("dash_manager");
+  // dataloggerManager.start("datalog_manager");
+  sensorManager.start("sensor_manager");
+  // ethernetManager.start("ethernet_manager");
 }
 
 void loop() {
