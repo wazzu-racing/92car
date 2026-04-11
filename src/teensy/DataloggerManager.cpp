@@ -17,19 +17,31 @@ void DataloggerManager::loop() {
 
     currentRowLock.lock();
     int lat = currentRow.lat;
-    int lon = currentRow.lon;
-    int elev = currentRow.elev;
     int gps_millis = currentRow.gps_millis;
+    // int lon = currentRow.lon;
+    // int elev = currentRow.elev;
+    float ax = (float)currentRow.ax / (float)1000;
+    int imu_millis = currentRow.imu_millis;
+
+    int rpm = currentRow.rpm;
+    int ecu_millis = currentRow.ecu_millis;
+
     currentRowLock.unlock();
 
     Serial.print("lat: ");
     Serial.print(lat);
-    Serial.print(", lon: ");
-    Serial.print(lon);
-    Serial.print(", elev: ");
-    Serial.print(elev);
+    Serial.print(", ax: ");
+    Serial.print(ax);
+    // Serial.print(", elev: ");
+    // Serial.print(elev);
     Serial.print(", gps_millis: ");
-    Serial.println(gps_millis);
+    Serial.print(gps_millis);
+    Serial.print(", imu_millis: ");
+    Serial.print(imu_millis);
+    Serial.print(", rpm: ");
+    Serial.print(rpm);
+    Serial.print(", ecu: ");
+    Serial.println(ecu_millis);
 }
 
 

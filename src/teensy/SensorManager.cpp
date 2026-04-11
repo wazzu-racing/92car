@@ -1,6 +1,10 @@
 #include "SensorManager.hpp"
 
-SensorManager::SensorManager() : accel(TEENSY_IMU_WIRE, 0x18), gyro(TEENSY_IMU_WIRE, 0x68) {}
+SensorManager* SensorManager::instance = nullptr;
+
+SensorManager::SensorManager() : imu(TEENSY_IMU_WIRE, 0x18, 0x68) {
+    instance = this;
+}
 
 void SensorManager::setup() {
     log("Setup SensorManager");
@@ -10,23 +14,40 @@ void SensorManager::setup() {
     currentRowLock.unlock();
 
 
+    TEENSY_GPS_WIRE.setSDA(TEENSY_PIN_GPS_SDA);
+    TEENSY_GPS_WIRE.setSCL(TEENSY_PIN_GPS_SCL);
     TEENSY_GPS_WIRE.begin();
+
+    TEENSY_IMU_WIRE.setSDA(TEENSY_PIN_IMU_SDA);
+    TEENSY_IMU_WIRE.setSCL(TEENSY_PIN_IMU_SCL);
     TEENSY_IMU_WIRE.begin();
+
     if (myGNSS.begin(TEENSY_GPS_WIRE) == false) { //Connect to the u-blox module using Wire port {
         log("error with GPS... cannot connect...");
-        while (1);
-    }
-    log("gps connected...");
+    } else {
+        log("gps connected...");
         myGNSS.checkUblox();
-
-    if(accel.begin() < 0 || gyro.begin() < 0) {
-        log("error with IMU... cannot connect...");
     }
+
+    if(imu.begin() < 0) {
+        log("error with IMU... cannot connect...");
+    } else {
+        log("imu connected...");
+    }
+
+
+    // CAN STUFF
+    Can.begin();
+    Can.setBaudRate(
+        500000); // set to 500000 for normal Megasquirt usage - need to change
+                 // Megasquirt firmware to change MS CAN baud rate
+    Can.setMaxMB(16); // sets maximum number of mailboxes for FlexCAN_T4 usage
+    Can.enableFIFO();
+    Can.enableFIFOInterrupt();
+    Can.onReceive(handleManager); // when a CAN message is received, runs the
 }
 
 void SensorManager::loop() {
-
-
     if (myGNSS.getPVT(10)) {
         currentRowLock.lock();
         currentRow.lat = myGNSS.getLatitude();
@@ -35,17 +56,60 @@ void SensorManager::loop() {
         currentRow.ground_speed = myGNSS.getGroundSpeed();
         currentRow.gps_millis = millis();
         currentRowLock.unlock();
-
-        // Serial.print("unixtime\t"); Serial.println(myGNSS.getUnixEpoch());
-        // Serial.print("lat\t"); Serial.println(myGNSS.getLatitude());
-        // Serial.print("lon\t"); Serial.println(myGNSS.getLongitude());
-        // Serial.print("elev\t"); Serial.println(myGNSS.getAltitude());
-        // Serial.print("ground_speed\t"); Serial.println(myGNSS.getGroundSpeed());
-        // Serial.print("gps_millis\t"); Serial.println(millis());
-        // Serial.println("\n\n\n");
     }
 
+    imu.readSensor();
 
+    currentRowLock.lock();
+    currentRow.ax = imu.getAccelX_mss() * 1000;
+    currentRow.ay = imu.getAccelY_mss() * 1000;
+    currentRow.az = imu.getAccelZ_mss() * 1000;
+    currentRow.accel_millis = millis();
+
+    currentRow.imu_x = imu.getGyroX_rads() * 1000;
+    currentRow.imu_y = imu.getGyroY_rads() * 1000;
+    currentRow.imu_z = imu.getGyroZ_rads() * 1000;
+    currentRow.imu_millis = millis();
+    currentRowLock.unlock();
+
+    threads.delay(10);
+}
+
+void SensorManager::handleManager(const CAN_message_t &msg){
+    if(instance){
+        instance->handle(msg);
+    }
+}
+
+void SensorManager::handle(const CAN_message_t &msg){
+    if(ecu.decode(msg)){
+        currentRowLock.lock();
+        currentRow.rpm = ecu.data.rpm;
+        currentRow.time = ecu.data.seconds;
+        currentRow.afr = ecu.data.AFR1 * 1000;
+        currentRow.fuelload = ecu.data.fuelload * 1000;
+        currentRow.spark_advance = ecu.data.adv_deg * 1000;
+        currentRow.baro = ecu.data.baro * 1000;
+        currentRow.map = ecu.data.map * 1000;
+        currentRow.mat = ecu.data.mat * 1000;
+        currentRow.clnt_temp = ecu.data.clt * 1000;
+        currentRow.tps = ecu.data.tps * 1000;
+        currentRow.batt = ecu.data.batt * 1000;
+        currentRow.oil_press = ecu.data.sensors1 * 1000;
+        currentRow.syncloss_count = ecu.data.synccnt;
+        currentRow.syncloss_code = ecu.data.syncreason;
+        currentRow.ltcl_timing = ecu.data.launch_timing * 1000;
+        currentRow.ve1 = ecu.data.ve1 * 1000;
+        currentRow.ve2 = ecu.data.ve2 * 1000;
+        currentRow.egt = ecu.data.egt1 * 1000;
+        currentRow.maf = ecu.data.MAF * 1000;
+        currentRow.in_temp = ecu.data.airtemp * 1000;
+        currentRow.ecu_millis = millis();
+        currentRowLock.unlock();
+    }
+}
+
+/*
     // Sensors:
 
     // FROM THE IMU:
@@ -97,4 +161,4 @@ void SensorManager::loop() {
 
     // CAN ID 3
     // - analogx3_millis
-}
+*/
