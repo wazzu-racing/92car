@@ -5,15 +5,23 @@
 #include "DashboardManager.hpp"
 #include "EthernetManager.hpp"
 #include "SensorManager.hpp"
+#include "Row.hpp"
 
 #include "constants.hpp"
 
+Threads::Mutex rowLock;
+Row row;
+
 DashboardManager dashboardManager;
-SensorManager sensorManager;
-DataloggerManager dataloggerManager(sensorManager.currentRow, sensorManager.currentRowLock);
+SensorManager sensorManager(row, rowLock);
+DataloggerManager dataloggerManager(row, rowLock);
 EthernetManager ethernetManager;
 
 void setup() {
+  rowLock.lock();
+  row = Row();
+  rowLock.unlock();
+
   Serial.begin(9600);
 
   pinMode(TEENSY_PIN_LED_0, OUTPUT);
@@ -22,7 +30,7 @@ void setup() {
   pinMode(TEENSY_PIN_LED_3, OUTPUT);
 
   // dashboardManager.start("dash_manager");
-  dataloggerManager.start("datalog_manager");
+  // dataloggerManager.start("datalog_manager");
   sensorManager.start("sensor_manager");
   // ethernetManager.start("ethernet_manager");
 }

@@ -11,15 +11,18 @@
 
 class SensorManager: public ThreadedManager {
 public:
-    SensorManager();
+    SensorManager(Row& row, Threads::Mutex& lock) :
+        row(row), rowLock(lock), accel(TEENSY_IMU_WIRE, TEENSY_ACEL_REG), gyro(TEENSY_IMU_WIRE, TEENSY_GYRO_REG)  {
+        // ...
+    }
     void loop();
     void setup();
+
 private:
-    SFE_UBLOX_GNSS myGNSS;
+    SFE_UBLOX_GNSS gps;
     Bmi088Accel accel;
     Bmi088Gyro gyro;
-public:
 
-    Threads::Mutex currentRowLock;
-    Row currentRow;
+    Row& row;
+    Threads::Mutex& rowLock;
 };

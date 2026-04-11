@@ -8,12 +8,14 @@
 
 class DataloggerManager: public ThreadedManager {
 public:
-    DataloggerManager(Row& row, Threads::Mutex& lock);
+    DataloggerManager(Row& row, Threads::Mutex& lock) : row(row), rowLock(lock) {
+        // ...
+    }
     void loop();
     void setup();
 private:
     SdFat SD;
 
-    Row& currentRow;
-    Threads::Mutex& currentRowLock;
+    Row& row;
+    Threads::Mutex& rowLock;
 };

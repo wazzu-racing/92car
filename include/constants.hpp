@@ -38,12 +38,14 @@
 #define TEENSY_IMU_WIRE             Wire
 #define TEENSY_PIN_IMU_SDA          18
 #define TEENSY_PIN_IMU_SCL          19
+#define TEENSY_GYRO_REG             0x68
+#define TEENSY_ACEL_REG             0x18
 #define TEENSY_PIN_GYRO_INTERRUPT   20
 #define TEENSY_PIN_ACEL_INTERRUPT   21
 
 #define TEENSY_PIN_GENERIC_26       26
 #define TEENSY_PIN_GENERIC_27       27
-#define TEENSY_PIN_LED_0            28 // Status indicator for dashboardManage
+#define TEENSY_PIN_LED_0            28 // Status indicator for dashboardManager
 #define TEENSY_PIN_LED_1            29 // Status indicator for dataloggerManager
 #define TEENSY_PIN_CAN_SENSOR_RX    30 // CAN 3
 #define TEENSY_PIN_CAN_SENSOR_TX    31 // CAN 3
