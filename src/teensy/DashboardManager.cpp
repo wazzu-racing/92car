@@ -18,7 +18,7 @@ DashboardManager::DashboardManager() : tft(TFT_CS, TFT_DC, TFT_RST), reader(SD) 
 void DashboardManager::setup() {
     tft.init(240, 320);
 
-    if(!SD.begin(SD_CS)) { 
+    if(!SD.begin(SD_CS)) {
         Serial.println(F("SD begin() failed"));
         for(;;); // fatal error, do not continue
     }

@@ -5,6 +5,9 @@
 #include <Wire.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
 #include "BMI088.h"
+#include "row.hpp"
+#include <TeensyThreads.h>
+
 
 class SensorManager: public ThreadedManager {
 public:
@@ -16,12 +19,7 @@ private:
     Bmi088Accel accel;
     Bmi088Gyro gyro;
 public:
-    // Variables that the datalogger module will read. It is safe to read them
-    // without a mutex because the read is atomic (they're ints)
 
-    int32_t unixtime;
-    int32_t lat;
-    int32_t lon;
-    int32_t alt;
-
+    Threads::Mutex currentRowLock;
+    Row currentRow;
 };

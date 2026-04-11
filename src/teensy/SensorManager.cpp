@@ -4,6 +4,12 @@ SensorManager::SensorManager() : accel(TEENSY_IMU_WIRE, 0x18), gyro(TEENSY_IMU_W
 
 void SensorManager::setup() {
     log("Setup SensorManager");
+
+    currentRowLock.lock();
+    currentRow = Row();
+    currentRowLock.unlock();
+
+
     TEENSY_GPS_WIRE.begin();
     TEENSY_IMU_WIRE.begin();
     if (myGNSS.begin(TEENSY_GPS_WIRE) == false) { //Connect to the u-blox module using Wire port {
@@ -19,14 +25,24 @@ void SensorManager::setup() {
 }
 
 void SensorManager::loop() {
+
+
     if (myGNSS.getPVT(10)) {
-        Serial.print("unixtime\t"); Serial.println(myGNSS.getUnixEpoch());
-        Serial.print("lat\t"); Serial.println(myGNSS.getLatitude());
-        Serial.print("lon\t"); Serial.println(myGNSS.getLongitude());
-        Serial.print("elev\t"); Serial.println(myGNSS.getAltitude());
-        Serial.print("ground_speed\t"); Serial.println(myGNSS.getGroundSpeed());
-        Serial.print("gps_millis\t"); Serial.println(millis());
-        Serial.println("\n\n\n");
+        currentRowLock.lock();
+        currentRow.lat = myGNSS.getLatitude();
+        currentRow.lon = myGNSS.getLongitude();
+        currentRow.elev = myGNSS.getAltitude();
+        currentRow.ground_speed = myGNSS.getGroundSpeed();
+        currentRow.gps_millis = millis();
+        currentRowLock.unlock();
+
+        // Serial.print("unixtime\t"); Serial.println(myGNSS.getUnixEpoch());
+        // Serial.print("lat\t"); Serial.println(myGNSS.getLatitude());
+        // Serial.print("lon\t"); Serial.println(myGNSS.getLongitude());
+        // Serial.print("elev\t"); Serial.println(myGNSS.getAltitude());
+        // Serial.print("ground_speed\t"); Serial.println(myGNSS.getGroundSpeed());
+        // Serial.print("gps_millis\t"); Serial.println(millis());
+        // Serial.println("\n\n\n");
     }
 
 

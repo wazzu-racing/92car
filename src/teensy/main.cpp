@@ -9,8 +9,8 @@
 #include "constants.hpp"
 
 DashboardManager dashboardManager;
-DataloggerManager dataloggerManager;
 SensorManager sensorManager;
+DataloggerManager dataloggerManager(sensorManager.currentRow, sensorManager.currentRowLock);
 EthernetManager ethernetManager;
 
 void setup() {
@@ -22,7 +22,7 @@ void setup() {
   pinMode(TEENSY_PIN_LED_3, OUTPUT);
 
   // dashboardManager.start("dash_manager");
-  // dataloggerManager.start("datalog_manager");
+  dataloggerManager.start("datalog_manager");
   sensorManager.start("sensor_manager");
   // ethernetManager.start("ethernet_manager");
 }

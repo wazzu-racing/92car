@@ -1,4 +1,5 @@
 #include "DataloggerManager.hpp"
+#include "row.hpp"
 
 void DataloggerManager::setup() {
     Serial.println("Setup DataloggerManager");
@@ -13,5 +14,24 @@ void DataloggerManager::setup() {
 
 void DataloggerManager::loop() {
     threads.delay(100);
-    Serial.println("Datalogger...");
+
+    currentRowLock.lock();
+    int lat = currentRow.lat;
+    int lon = currentRow.lon;
+    int elev = currentRow.elev;
+    int gps_millis = currentRow.gps_millis;
+    currentRowLock.unlock();
+
+    Serial.print("lat: ");
+    Serial.print(lat);
+    Serial.print(", lon: ");
+    Serial.print(lon);
+    Serial.print(", elev: ");
+    Serial.print(elev);
+    Serial.print(", gps_millis: ");
+    Serial.println(gps_millis);
+}
+
+
+DataloggerManager::DataloggerManager(Row& row, Threads::Mutex& lock) : currentRow(row), currentRowLock(lock) {
 }
