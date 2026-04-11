@@ -26,10 +26,6 @@
 #define TEENSY_PIN_GENERIC_15       15
 #define TEENSY_PIN_SEGMENT_SCL      16
 #define TEENSY_PIN_SEGMENT_SDA      17
-#define TEENSY_PIN_IMU_SDA          18
-#define TEENSY_PIN_IMU_SCL          19
-#define TEENSY_PIN_GYRO_INTERRUPT   20
-#define TEENSY_PIN_ACEL_INTERRUPT   21
 
 #define TEENSY_PIN_CAN_ECU_TX       22 // CAN 1
 #define TEENSY_PIN_CAN_ECU_RX       23 // CAN 1
@@ -39,10 +35,16 @@
 #define TEENSY_PIN_GPS_SDA          25
 #define TEENSY_GPS_WIRE             Wire2
 
+#define TEENSY_IMU_WIRE             Wire
+#define TEENSY_PIN_IMU_SDA          18
+#define TEENSY_PIN_IMU_SCL          19
+#define TEENSY_PIN_GYRO_INTERRUPT   20
+#define TEENSY_PIN_ACEL_INTERRUPT   21
+
 #define TEENSY_PIN_GENERIC_26       26
 #define TEENSY_PIN_GENERIC_27       27
-#define TEENSY_PIN_LED_0            28
-#define TEENSY_PIN_LED_1            29
+#define TEENSY_PIN_LED_0            28 // Status indicator for dashboardManage
+#define TEENSY_PIN_LED_1            29 // Status indicator for dataloggerManager
 #define TEENSY_PIN_CAN_SENSOR_RX    30 // CAN 3
 #define TEENSY_PIN_CAN_SENSOR_TX    31 // CAN 3
 #define TEENSY_CAN_SENSOR           CAN3
@@ -51,10 +53,9 @@
 //      EMPTY EMPTY EMPTY EMPTY     33
 #define TEENSY_PIN_RADIO_TX         34
 #define TEENSY_PIN_RADIO_RX         35
-#define TEENSY_PIN_LED_3            36
-#define TEENSY_PIN_LED_2            37
+#define TEENSY_PIN_LED_3            36 // Status indicator for ethernetManager
+#define TEENSY_PIN_LED_2            37 // Status indicator for sensorManager
 #define TEENSY_PIN_LED_SHIFT        38
 #define TEENSY_PIN_MARKER           39
 #define TEENSY_PIN_GENERIC_40       40
 #define TEENSY_PIN_GPS_INTERRUPT    41
-

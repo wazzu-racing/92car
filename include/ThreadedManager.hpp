@@ -15,6 +15,7 @@ class ThreadedManager {
     volatile bool KEEP_RUNNING;
     volatile bool blink = false;
 
+
     virtual void loop() = 0;
     virtual void setup() = 0;
 

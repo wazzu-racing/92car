@@ -27,7 +27,7 @@ void setup() {
   Serial.begin(9600);
   while (!Serial1) delay(1);
   delay(100);
-  
+
   digitalWrite(RFM95_RST, LOW);
   delay(10);
   digitalWrite(RFM95_RST, HIGH);

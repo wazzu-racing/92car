@@ -2,9 +2,10 @@
 
 #include "ThreadedManager.hpp"
 
-#include <SD.h>
+#include <SdFat_Adafruit_Fork.h>
 
 class DataloggerManager: public ThreadedManager {
     void loop();
     void setup();
+    SdFat SD;
 };
