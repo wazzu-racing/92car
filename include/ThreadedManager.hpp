@@ -3,12 +3,6 @@
 #include <Arduino.h>
 #include <string>
 
-// #ifndef WRAPPED_SERIAL_
-// #define WRAPPED_SERIAL_
-// ThreadWrap(Serial, SerialXtra);
-// // #define Serial ThreadClone(SerialXtra)
-// #endif
-
 class ThreadedManager {
     std::string logname_;
 

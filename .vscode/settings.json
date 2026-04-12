@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "cstdlib": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "*.tpp": "cpp"
     }
 }

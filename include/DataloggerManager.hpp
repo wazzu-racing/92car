@@ -1,7 +1,8 @@
 #pragma once
 
 #include "ThreadedManager.hpp"
-#include "row.hpp"
+#include "Row.hpp"
+#include "constants.hpp"
 #include <TeensyThreads.h>
 
 #include <SdFat_Adafruit_Fork.h>
@@ -15,6 +16,13 @@ public:
     void setup();
 private:
     SdFat SD;
+    File32 file;
+    bool hasBeenRenamed = false;
+
+    Row rowBuffer[DATALOG_SD_BUFFER];
+    int rowBuffer_i = 0;
+    int last_sd = 0;
+    int last_radio = 0;
 
     Row& row;
     Threads::Mutex& rowLock;

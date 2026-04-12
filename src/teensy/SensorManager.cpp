@@ -19,7 +19,9 @@ void SensorManager::setup() {
         while (1);
     }
     log("gps connected...");
-    gps.checkUblox();
+    gps.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+    gps.setNavigationFrequency(40);
+    gps.setAutoPVT(true);
 
     if(accel.begin() < 0 || gyro.begin() < 0) {
         log("error with IMU... cannot connect...");
@@ -34,6 +36,20 @@ void SensorManager::setup() {
     // set GPS interrupt
     pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, FALLING);
+
+    // setup ECU CAN interrupt
+    can_ecu.begin();
+    can_ecu.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
+    can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
+    can_ecu.enableFIFO();
+    // can_ecu.mailboxStatus();
+
+    // setup sensor CAN interrupt
+    can_sensor.begin();
+    can_sensor.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
+    can_sensor.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
+    can_sensor.enableFIFO();
+    // can_sensor.mailboxStatus();
 }
 
 void SensorManager::loop() {
@@ -66,78 +82,77 @@ void SensorManager::loop() {
     }
 
     // GPS ========================================================================================
-    if (gps_updated) {
-
+    if (gps.getPVT()) { // check for auto message(?)
+        rowLock.lock();
+        row.lat          = gps.getLatitude();
+        row.lon          = gps.getLongitude();
+        row.elev         = gps.getAltitude();
+        row.ground_speed = gps.getGroundSpeed();
+        row.unixtime     = gps.getUnixEpoch();
+        row.gps_millis   = millis();
+        rowLock.unlock();
     }
 
-    // if (gps.getPVT(10)) {
-    //     currentRowLock.lock();
-    //     currentRow.lat = gps.getLatitude();
-    //     currentRow.lon = gps.getLongitude();
-    //     currentRow.elev = gps.getAltitude();
-    //     currentRow.ground_speed = gps.getGroundSpeed();
-    //     currentRow.gps_millis = millis();
-    //     currentRowLock.unlock();
+    // ECU CAN ====================================================================================
+    CAN_message_t msg;
+    MegaCAN_broadcast_message_t ecu;
+    while (can_ecu.read(msg)) {
+        if (msg.flags.extended) continue;
 
-    //     // Serial.print("unixtime\t"); Serial.println(myGNSS.getUnixEpoch());
-    //     // Serial.print("lat\t"); Serial.println(myGNSS.getLatitude());
-    //     // Serial.print("lon\t"); Serial.println(myGNSS.getLongitude());
-    //     // Serial.print("elev\t"); Serial.println(myGNSS.getAltitude());
-    //     // Serial.print("ground_speed\t"); Serial.println(myGNSS.getGroundSpeed());
-    //     // Serial.print("gps_millis\t"); Serial.println(millis());
-    //     // Serial.println("\n\n\n");
-    // }
+        megaCAN.getBCastData(msg.id, msg.buf, ecu);
 
+        rowLock.lock();
+        row.rpm             = ecu.rpm;
+        row.time            = ecu.seconds;
+        row.afr             = ecu.AFR1          * 1000;
+        row.fuelload        = ecu.fuelload      * 1000;
+        row.spark_advance   = ecu.adv_deg       * 1000;
+        row.baro            = ecu.baro          * 1000;
+        row.map             = ecu.map           * 1000;
+        row.mat             = ecu.mat           * 1000;
+        row.clnt_temp       = ecu.clt           * 1000;
+        row.tps             = ecu.tps           * 1000;
+        row.batt            = ecu.batt          * 1000;
+        row.oil_press       = ecu.sensors1      * 1000;
+        row.syncloss_count  = ecu.synccnt;
+        row.syncloss_code   = ecu.syncreason;
+        row.ltcl_timing     = ecu.launch_timing * 1000;
+        row.ve1             = ecu.ve1           * 1000;
+        row.ve2             = ecu.ve2           * 1000;
+        row.egt             = ecu.egt1          * 1000;
+        row.maf             = ecu.MAF           * 1000;
+        row.in_temp         = ecu.airtemp       * 1000;
+        row.ecu_millis      = millis();
+        rowLock.unlock();
+    }
 
-    // // Sensors:
-
-    // // FROM THE IMU:
-    // // - ax * 1000
-    // // - ay * 1000
-    // // - az * 1000
-    // // - pitch * 1000
-    // // - yaw * 1000
-    // // - roll * 1000
-    // // - imu_millis
-
-    // // FROM THE ECU:
-    // // - rpm
-    // // - time (seconds)
-    // // - afr * 1000
-    // // - fuelload * 1000
-    // // - spark_advance * 1000
-    // // - baro * 1000
-    // // - map * 1000
-    // // - mat * 1000
-    // // - clnt_temp * 1000
-    // // - tps * 1000
-    // // - batt * 1000
-    // // - oil_press * 1000
-    // // - syncloss_count
-    // // - syncloss_code
-    // // - itcl_timing * 1000
-    // // - ve1 * 1000
-    // // - ve2 * 1000
-    // // - egt * 1000
-    // // - maf * 1000
-    // // - in_temp * 1000
-    // // - ecu_millis
-
-    // // OTHER SENSORS
-
-    // // CAN ID 1
-    // // - brake1
-    // // - brake2
-    // // - susp_pot_1
-    // // - susp_pot_2
-    // // - analogx1_millis
-
-    // // CAN ID 2
-    // // - susp_pot_4
-    // // - rad_in
-    // // - rad_out
-    // // - susp_pot_3
-
-    // // CAN ID 3
-    // // - analogx3_millis
+    // Sensor CAN =================================================================================
+    while (can_sensor.read(msg)) {
+        switch (msg.id) {
+            case SENSOR_CAN_ID_BRAKE_1:
+                row.brake1 = (int)msg.buf;
+                break;
+            case SENSOR_CAN_ID_BRAKE_2:
+                row.brake1 = (int)msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_1:
+                row.susp_pot_1 = (int)msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_2:
+                row.susp_pot_2 = (int)msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_3:
+                row.susp_pot_3 = (int)msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_4:
+                row.susp_pot_4 = (int)msg.buf;
+                break;
+            case SENSOR_CAN_ID_RAD_IN:
+                row.rad_in = (int)msg.buf;
+                break;
+            case SENSOR_CAN_ID_RAD_OUT:
+                row.rad_out = (int)msg.buf;
+                break;
+        }
+    }
 }
