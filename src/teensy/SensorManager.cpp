@@ -1,17 +1,17 @@
 #include "SensorManager.hpp"
 
 SensorManager* SensorManager::instance = nullptr;
+volatile bool gyro_updated = false;
+volatile bool accel_updated = false;
+volatile bool gps_updated = false;
 
-SensorManager::SensorManager() : imu(TEENSY_IMU_WIRE, 0x18, 0x68) {
-    instance = this;
-}
+void gyro_ISR() {gyro_updated = true;}
+void accel_ISR() {accel_updated = true;}
+void gps_ISR() {gps_updated = true;}
 
 void SensorManager::setup() {
+    instance = this;
     log("Setup SensorManager");
-
-    currentRowLock.lock();
-    currentRow = Row();
-    currentRowLock.unlock();
 
 
     TEENSY_GPS_WIRE.setSDA(TEENSY_PIN_GPS_SDA);
@@ -22,11 +22,11 @@ void SensorManager::setup() {
     TEENSY_IMU_WIRE.setSCL(TEENSY_PIN_IMU_SCL);
     TEENSY_IMU_WIRE.begin();
 
-    if (myGNSS.begin(TEENSY_GPS_WIRE) == false) { //Connect to the u-blox module using Wire port {
+    if (gps.begin(TEENSY_GPS_WIRE) == false) { //Connect to the u-blox module using Wire port {
         log("error with GPS... cannot connect...");
     } else {
         log("gps connected...");
-        myGNSS.checkUblox();
+        gps.checkUblox();
     }
 
     if(imu.begin() < 0) {
@@ -34,6 +34,16 @@ void SensorManager::setup() {
     } else {
         log("imu connected...");
     }
+
+    // Set IMU interrupts
+    pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT_PULLUP);
+    pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, FALLING);
+
+    // Set GPS interrupt
+    pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, FALLING);
 
 
     // CAN STUFF
@@ -48,29 +58,39 @@ void SensorManager::setup() {
 }
 
 void SensorManager::loop() {
-    if (myGNSS.getPVT(10)) {
-        currentRowLock.lock();
-        currentRow.lat = myGNSS.getLatitude();
-        currentRow.lon = myGNSS.getLongitude();
-        currentRow.elev = myGNSS.getAltitude();
-        currentRow.ground_speed = myGNSS.getGroundSpeed();
-        currentRow.gps_millis = millis();
-        currentRowLock.unlock();
+    // accelerometer of IMU =======================================================================
+    if (accel_updated) {
+        accel_updated = false;
+
+        imu.readSensor();
+
+        rowLock.lock();
+        row.ax           = imu.getAccelX_mss() * 1000;
+        row.ay           = imu.getAccelY_mss() * 1000;
+        row.az           = imu.getAccelZ_mss() * 1000;
+        row.accel_millis = millis();
+        rowLock.unlock();
     }
 
-    imu.readSensor();
 
-    currentRowLock.lock();
-    currentRow.ax = imu.getAccelX_mss() * 1000;
-    currentRow.ay = imu.getAccelY_mss() * 1000;
-    currentRow.az = imu.getAccelZ_mss() * 1000;
-    currentRow.accel_millis = millis();
+    // gyroscope of IMU ===========================================================================
+    if (gyro_updated) {
+        gyro_updated = false;
 
-    currentRow.imu_x = imu.getGyroX_rads() * 1000;
-    currentRow.imu_y = imu.getGyroY_rads() * 1000;
-    currentRow.imu_z = imu.getGyroZ_rads() * 1000;
-    currentRow.imu_millis = millis();
-    currentRowLock.unlock();
+        imu.readSensor();
+
+        rowLock.lock();
+            row.imu_x      = imu.getGyroX_rads() * 1000;
+            row.imu_y      = imu.getGyroY_rads() * 1000;
+            row.imu_z      = imu.getGyroZ_rads() * 1000;
+            row.imu_millis = millis();
+            rowLock.unlock();
+    }
+
+    if (gps_updated){
+
+    }
+
 
     threads.delay(10);
 }
@@ -83,29 +103,29 @@ void SensorManager::handleManager(const CAN_message_t &msg){
 
 void SensorManager::handle(const CAN_message_t &msg){
     if(ecu.decode(msg)){
-        currentRowLock.lock();
-        currentRow.rpm = ecu.data.rpm;
-        currentRow.time = ecu.data.seconds;
-        currentRow.afr = ecu.data.AFR1 * 1000;
-        currentRow.fuelload = ecu.data.fuelload * 1000;
-        currentRow.spark_advance = ecu.data.adv_deg * 1000;
-        currentRow.baro = ecu.data.baro * 1000;
-        currentRow.map = ecu.data.map * 1000;
-        currentRow.mat = ecu.data.mat * 1000;
-        currentRow.clnt_temp = ecu.data.clt * 1000;
-        currentRow.tps = ecu.data.tps * 1000;
-        currentRow.batt = ecu.data.batt * 1000;
-        currentRow.oil_press = ecu.data.sensors1 * 1000;
-        currentRow.syncloss_count = ecu.data.synccnt;
-        currentRow.syncloss_code = ecu.data.syncreason;
-        currentRow.ltcl_timing = ecu.data.launch_timing * 1000;
-        currentRow.ve1 = ecu.data.ve1 * 1000;
-        currentRow.ve2 = ecu.data.ve2 * 1000;
-        currentRow.egt = ecu.data.egt1 * 1000;
-        currentRow.maf = ecu.data.MAF * 1000;
-        currentRow.in_temp = ecu.data.airtemp * 1000;
-        currentRow.ecu_millis = millis();
-        currentRowLock.unlock();
+        rowLock.lock();
+        row.rpm = ecu.data.rpm;
+        row.time = ecu.data.seconds;
+        row.afr = ecu.data.AFR1 * 1000;
+        row.fuelload = ecu.data.fuelload * 1000;
+        row.spark_advance = ecu.data.adv_deg * 1000;
+        row.baro = ecu.data.baro * 1000;
+        row.map = ecu.data.map * 1000;
+        row.mat = ecu.data.mat * 1000;
+        row.clnt_temp = ecu.data.clt * 1000;
+        row.tps = ecu.data.tps * 1000;
+        row.batt = ecu.data.batt * 1000;
+        row.oil_press = ecu.data.sensors1 * 1000;
+        row.syncloss_count = ecu.data.synccnt;
+        row.syncloss_code = ecu.data.syncreason;
+        row.ltcl_timing = ecu.data.launch_timing * 1000;
+        row.ve1 = ecu.data.ve1 * 1000;
+        row.ve2 = ecu.data.ve2 * 1000;
+        row.egt = ecu.data.egt1 * 1000;
+        row.maf = ecu.data.MAF * 1000;
+        row.in_temp = ecu.data.airtemp * 1000;
+        row.ecu_millis = millis();
+        rowLock.unlock();
     }
 }
 

@@ -7,16 +7,24 @@
 #include "SensorManager.hpp"
 
 #include "constants.hpp"
+#include "Row.hpp"
+
+Threads::Mutex rowLock;
+Row row;
 
 DashboardManager dashboardManager;
-SensorManager sensorManager;
-DataloggerManager dataloggerManager(sensorManager.currentRow, sensorManager.currentRowLock);
+SensorManager sensorManager(row, rowLock);
+DataloggerManager dataloggerManager(row, rowLock);
 EthernetManager ethernetManager;
 
 void setup() {
   Serial.begin(9600);
   while (!Serial && millis() < 5000); // Wait for serial
   Serial.println("System Booting...");
+
+  rowLock.lock();
+  row = Row();
+  rowLock.unlock();
 
   pinMode(TEENSY_PIN_LED_0, OUTPUT);
   pinMode(TEENSY_PIN_LED_1, OUTPUT);

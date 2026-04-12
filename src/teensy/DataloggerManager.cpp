@@ -1,5 +1,5 @@
 #include "DataloggerManager.hpp"
-#include "row.hpp"
+#include "Row.hpp"
 
 void DataloggerManager::setup() {
     this->log("Setup DataloggerManager");
@@ -31,9 +31,9 @@ void DataloggerManager::loop() {
         return;
     }
 
-    currentRowLock.lock();
-    Row localRow = currentRow;
-    currentRowLock.unlock();
+    rowLock.lock();
+    Row localRow = row;
+    rowLock.unlock();
 
     this->log(
         "RPM: " + std::to_string(localRow.rpm) +
@@ -41,9 +41,9 @@ void DataloggerManager::loop() {
     );
 
     // Update timestamp and write binary data
-    currentRowLock.lock();
-    currentRow.write_millis = millis();
-    size_t written = file.write((const uint8_t *)&currentRow, sizeof(Row));
+    rowLock.lock();
+    row.write_millis = millis();
+    size_t written = file.write((const uint8_t *)&row, sizeof(Row));
 
     // Periodically sync file
     static uint32_t lastSync = 0;
@@ -51,13 +51,9 @@ void DataloggerManager::loop() {
         file.sync();
         lastSync = millis();
     }
-    currentRowLock.unlock();
+    rowLock.unlock();
 
     if (written != sizeof(Row)) {
         this->log("Write failed! bytes: " + std::to_string(written));
     }
-}
-
-
-DataloggerManager::DataloggerManager(Row& row, Threads::Mutex& lock) : currentRow(row), currentRowLock(lock) {
 }
