@@ -15,6 +15,8 @@ EthernetManager ethernetManager;
 
 void setup() {
   Serial.begin(9600);
+  while (!Serial && millis() < 5000); // Wait for serial
+  Serial.println("System Booting...");
 
   pinMode(TEENSY_PIN_LED_0, OUTPUT);
   pinMode(TEENSY_PIN_LED_1, OUTPUT);

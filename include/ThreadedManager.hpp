@@ -22,7 +22,7 @@ class ThreadedManager {
     static void runner(void* arg);
 
 protected:
-    void log(std::string data);
+    virtual void log(std::string data);
 
 public:
     void start(std::string logname);

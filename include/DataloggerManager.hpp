@@ -3,6 +3,7 @@
 #include "ThreadedManager.hpp"
 #include "row.hpp"
 #include <TeensyThreads.h>
+#include <FS.h>
 
 #include <SdFat_Adafruit_Fork.h>
 
@@ -13,7 +14,9 @@ public:
     void setup();
 private:
     SdFat SD;
+    bool initialized = false;
 
     Row& currentRow;
     Threads::Mutex& currentRowLock;
+    File32 file;
 };
