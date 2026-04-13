@@ -4,6 +4,9 @@ volatile bool gyro_updated = false;
 volatile bool accel_updated = false;
 volatile bool gps_updated = false;
 
+static CAN_message_t msg;
+static MegaCAN_broadcast_message_t ecu;
+
 void gyro_ISR() {gyro_updated = true;}
 void accel_ISR() {accel_updated = true;}
 void gps_ISR() {gps_updated = true;}
@@ -20,7 +23,7 @@ void SensorManager::setup() {
     }
     log("gps connected...");
     gps.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-    gps.setNavigationFrequency(40);
+    gps.setNavigationFrequency(1);
     gps.setAutoPVT(true);
 
     if(accel.begin() < 0 || gyro.begin() < 0) {
@@ -28,31 +31,39 @@ void SensorManager::setup() {
     }
 
     // set IMU interrupts
-    pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT_PULLUP);
-    pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, FALLING);
+    // pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT_PULLDOWN);
+    // pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLDOWN);
+    // pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLDOWN);
+    // attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, RISING);
+    // attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, RISING);
+    // attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
 
-    // set GPS interrupt
-    pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, FALLING);
+    log("setup IMU interrupts");
 
     // setup ECU CAN interrupt
     can_ecu.begin();
     can_ecu.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
-    can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
-    can_ecu.enableFIFO();
+    // can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
+    // can_ecu.enableFIFO();
+    // can_ecu.setFIFOFilter(ACCEPT_ALL); // or specific IDs
     // can_ecu.mailboxStatus();
+
+    log("set up can ecu interrupts");
 
     // setup sensor CAN interrupt
     can_sensor.begin();
     can_sensor.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
     can_sensor.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
     can_sensor.enableFIFO();
+    can_sensor.setFIFOFilter(ACCEPT_ALL); // or specific IDs
     // can_sensor.mailboxStatus();
+
+    log("set up can sensor interrupts");
 }
 
 void SensorManager::loop() {
+    // log("sensor loop start");
+    // log(std::to_string(millis()));
     // accelerometer of IMU =======================================================================
     if (accel_updated) {
         accel_updated = false;
@@ -67,6 +78,7 @@ void SensorManager::loop() {
         rowLock.unlock();
     }
 
+    // log("done with accel");
     // gyroscope of IMU ===========================================================================
     if (gyro_updated) {
         gyro_updated = false;
@@ -80,26 +92,34 @@ void SensorManager::loop() {
         row.imu_millis = millis();
         rowLock.unlock();
     }
+    // log("done with imu");
 
-    // GPS ========================================================================================
-    if (gps.getPVT()) { // check for auto message(?)
-        rowLock.lock();
-        row.lat          = gps.getLatitude();
-        row.lon          = gps.getLongitude();
-        row.elev         = gps.getAltitude();
-        row.ground_speed = gps.getGroundSpeed();
-        row.unixtime     = gps.getUnixEpoch();
-        row.gps_millis   = millis();
-        rowLock.unlock();
-    }
+    // // GPS ========================================================================================
+    // if (gps_updated) { // check for auto message(?)
+    //     gps_updated = false;
+    //     log("GPS...");
+    //     // rowLock.lock();
+    //     // row.lat          = gps.getLatitude();
+    //     // row.lon          = gps.getLongitude();
+    //     // row.elev         = gps.getAltitude();
+    //     // row.ground_speed = gps.getGroundSpeed();
+    //     // row.unixtime     = gps.getUnixEpoch();
+    //     // row.gps_millis   = millis();
+    //     // rowLock.unlock();
+    // }
+
+    log("done with gps");
 
     // ECU CAN ====================================================================================
-    CAN_message_t msg;
-    MegaCAN_broadcast_message_t ecu;
-    while (can_ecu.read(msg)) {
+    can_ecu.events();
+    log(std::to_string(can_ecu.read(msg)));
+    while (false) {
+        log("message from can!!");
         if (msg.flags.extended) continue;
 
         megaCAN.getBCastData(msg.id, msg.buf, ecu);
+
+        log(std::to_string(ecu.tps));
 
         rowLock.lock();
         row.rpm             = ecu.rpm;
@@ -126,33 +146,41 @@ void SensorManager::loop() {
         rowLock.unlock();
     }
 
+    // log("done with ecu");
+
     // Sensor CAN =================================================================================
     while (can_sensor.read(msg)) {
-        switch (msg.id) {
-            case SENSOR_CAN_ID_BRAKE_1:
-                row.brake1 = (int)msg.buf;
-                break;
-            case SENSOR_CAN_ID_BRAKE_2:
-                row.brake1 = (int)msg.buf;
-                break;
-            case SENSOR_CAN_ID_SUSPOT_1:
-                row.susp_pot_1 = (int)msg.buf;
-                break;
-            case SENSOR_CAN_ID_SUSPOT_2:
-                row.susp_pot_2 = (int)msg.buf;
-                break;
-            case SENSOR_CAN_ID_SUSPOT_3:
-                row.susp_pot_3 = (int)msg.buf;
-                break;
-            case SENSOR_CAN_ID_SUSPOT_4:
-                row.susp_pot_4 = (int)msg.buf;
-                break;
-            case SENSOR_CAN_ID_RAD_IN:
-                row.rad_in = (int)msg.buf;
-                break;
-            case SENSOR_CAN_ID_RAD_OUT:
-                row.rad_out = (int)msg.buf;
-                break;
-        }
+        log("sensor can message");
+    //     switch (msg.id) {
+    //         case SENSOR_CAN_ID_BRAKE_1:
+    //             row.brake1 = (int)*msg.buf;
+    //             break;
+    //         case SENSOR_CAN_ID_BRAKE_2:
+    //             row.brake1 = (int)*msg.buf;
+    //             break;
+    //         case SENSOR_CAN_ID_SUSPOT_1:
+    //             row.susp_pot_1 = (int)*msg.buf;
+    //             break;
+    //         case SENSOR_CAN_ID_SUSPOT_2:
+    //             row.susp_pot_2 = (int)*msg.buf;
+    //             break;
+    //         case SENSOR_CAN_ID_SUSPOT_3:
+    //             row.susp_pot_3 = (int)*msg.buf;
+    //             break;
+    //         case SENSOR_CAN_ID_SUSPOT_4:
+    //             row.susp_pot_4 = (int)*msg.buf;
+    //             break;
+    //         case SENSOR_CAN_ID_RAD_IN:
+    //             row.rad_in = (int)*msg.buf;
+    //             break;
+    //         case SENSOR_CAN_ID_RAD_OUT:
+    //             row.rad_out = (int)*msg.buf;
+    //             break;
+    //     }
     }
+    // log("done with sensorcan");
+
+    // // Analog Sensors =============================================================================
+
+    // // Thermocouples (i2c) ========================================================================
 }

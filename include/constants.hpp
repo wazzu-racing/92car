@@ -1,8 +1,8 @@
 #pragma once
 
-#define DATALOG_MAX_HZ              500
+#define DATALOG_MAX_HZ              1
 #define DATALOG_SD_BUFFER           1
-#define RADIO_MAX_HZ                10
+#define RADIO_MAX_HZ                0.5
 
 #define JAN_1_2025                  1735718400
 

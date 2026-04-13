@@ -26,6 +26,7 @@ void DataloggerManager::loop() {
 
     if (rowBuffer_i == DATALOG_SD_BUFFER) {
         for (int i=0; i<DATALOG_SD_BUFFER; i++) {
+            rowBuffer[i].write_millis = millis();
             file.write((byte*) &rowBuffer[i], sizeof(Row));
         }
         file.flush();
@@ -37,13 +38,14 @@ void DataloggerManager::loop() {
     rowLock.unlock();
 
     if (millis() - last_radio >= (1000 / RADIO_MAX_HZ)) {
+        rowBuffer[rowBuffer_i].write_millis = millis();
         Serial8.write((byte*) &rowBuffer[rowBuffer_i], sizeof(Row));
         Serial8.print("\n\n\n");
         last_radio = millis();
     }
 
     if (!hasBeenRenamed) {
-        if (rowBuffer[rowBuffer_i].unixtime > JAN_1_2025) {
+        if (rowBuffer[rowBuffer_i].unixtime >= JAN_1_2025) {
             struct tm *t = gmtime((time_t*)&rowBuffer[rowBuffer_i].unixtime);
             char buf[32];
             strftime(buf, sizeof(buf), "%Y-%m-%d_%H:%M:%S.bin", t);
