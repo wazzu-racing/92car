@@ -12,14 +12,15 @@
 #define ANALOGX_3_CAN_ID            0xE4900
 
 #define ECU_BASE_CAN_ID             0x0
-#define SENSOR_CAN_ID_BRAKE_1       0x888 + 1
-#define SENSOR_CAN_ID_BRAKE_2       0x888 + 2
-#define SENSOR_CAN_ID_SUSPOT_1      0x888 + 3
-#define SENSOR_CAN_ID_SUSPOT_2      0x888 + 4
-#define SENSOR_CAN_ID_SUSPOT_3      0x888 + 5
-#define SENSOR_CAN_ID_SUSPOT_4      0x888 + 6
-#define SENSOR_CAN_ID_RAD_IN        0x888 + 7
-#define SENSOR_CAN_ID_RAD_OUT       0x888 + 8
+#define SENSOR_CAN_ID_BRAKE_1       0x100 + 1
+#define SENSOR_CAN_ID_BRAKE_2       0x100 + 2
+#define SENSOR_CAN_ID_SUSPOT_1      0x100 + 3
+#define SENSOR_CAN_ID_SUSPOT_2      0x100 + 4
+#define SENSOR_CAN_ID_SUSPOT_3      0x100 + 5
+#define SENSOR_CAN_ID_SUSPOT_4      0x100 + 6
+#define SENSOR_CAN_ID_RAD_IN        0x100 + 7
+#define SENSOR_CAN_ID_RAD_OUT       0x100 + 8
+#define SENSOR_CAN_ID_DASHBOARD     0x100 + 9
 
 #define TEENSY_PIN_GENERIC_0        0
 #define TEENSY_PIN_GENERIC_1        1

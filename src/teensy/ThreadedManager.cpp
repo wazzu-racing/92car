@@ -6,6 +6,7 @@ void ThreadedManager::runner(void* arg) {
     while (self->KEEP_RUNNING) {
         self->loop();
         self->blink = !(self->blink);
+        threads.yield(); // IDK if this is really needed, but it works with it
     }
 }
 

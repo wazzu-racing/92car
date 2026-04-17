@@ -62,8 +62,6 @@ void SensorManager::setup() {
 }
 
 void SensorManager::loop() {
-    // log("sensor loop start");
-    // log(std::to_string(millis()));
     // accelerometer of IMU =======================================================================
     if (accel_updated) {
         accel_updated = false;
@@ -78,7 +76,6 @@ void SensorManager::loop() {
         rowLock.unlock();
     }
 
-    // log("done with accel");
     // gyroscope of IMU ===========================================================================
     if (gyro_updated) {
         gyro_updated = false;
@@ -92,22 +89,6 @@ void SensorManager::loop() {
         row.imu_millis = millis();
         rowLock.unlock();
     }
-    // log("done with imu");
-
-    // // GPS ========================================================================================
-    // if (gps_updated) { // check for auto message(?)
-    //     gps_updated = false;
-    //     log("GPS...");
-    //     // rowLock.lock();
-    //     // row.lat          = gps.getLatitude();
-    //     // row.lon          = gps.getLongitude();
-    //     // row.elev         = gps.getAltitude();
-    //     // row.ground_speed = gps.getGroundSpeed();
-    //     // row.unixtime     = gps.getUnixEpoch();
-    //     // row.gps_millis   = millis();
-    //     // rowLock.unlock();
-    // }
-
 
     // ECU CAN ====================================================================================
     can_ecu.events();
@@ -144,41 +125,39 @@ void SensorManager::loop() {
         rowLock.unlock();
     }
 
-    // log("done with ecu");
-
     // Sensor CAN =================================================================================
+    can_sensor.events();
     while (can_sensor.read(msg)) {
-        log("sensor can message");
-    //     switch (msg.id) {
-    //         case SENSOR_CAN_ID_BRAKE_1:
-    //             row.brake1 = (int)*msg.buf;
-    //             break;
-    //         case SENSOR_CAN_ID_BRAKE_2:
-    //             row.brake1 = (int)*msg.buf;
-    //             break;
-    //         case SENSOR_CAN_ID_SUSPOT_1:
-    //             row.susp_pot_1 = (int)*msg.buf;
-    //             break;
-    //         case SENSOR_CAN_ID_SUSPOT_2:
-    //             row.susp_pot_2 = (int)*msg.buf;
-    //             break;
-    //         case SENSOR_CAN_ID_SUSPOT_3:
-    //             row.susp_pot_3 = (int)*msg.buf;
-    //             break;
-    //         case SENSOR_CAN_ID_SUSPOT_4:
-    //             row.susp_pot_4 = (int)*msg.buf;
-    //             break;
-    //         case SENSOR_CAN_ID_RAD_IN:
-    //             row.rad_in = (int)*msg.buf;
-    //             break;
-    //         case SENSOR_CAN_ID_RAD_OUT:
-    //             row.rad_out = (int)*msg.buf;
-    //             break;
-    //     }
+        rowLock.lock();
+        switch (msg.id) {
+            case SENSOR_CAN_ID_DASHBOARD:
+                // row.rpm = (int)msg.buf[0];
+                break;
+            case SENSOR_CAN_ID_BRAKE_1:
+                row.brake1 = (int)*msg.buf;
+                break;
+            case SENSOR_CAN_ID_BRAKE_2:
+                row.brake2 = (int)*msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_1:
+                row.susp_pot_1 = (int)*msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_2:
+                row.susp_pot_2 = (int)*msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_3:
+                row.susp_pot_3 = (int)*msg.buf;
+                break;
+            case SENSOR_CAN_ID_SUSPOT_4:
+                row.susp_pot_4 = (int)*msg.buf;
+                break;
+            case SENSOR_CAN_ID_RAD_IN:
+                row.rad_in = (int)*msg.buf;
+                break;
+            case SENSOR_CAN_ID_RAD_OUT:
+                row.rad_out = (int)*msg.buf;
+                break;
+        }
+        rowLock.unlock();
     }
-    // log("done with sensorcan");
-
-    // // Analog Sensors =============================================================================
-
-    // // Thermocouples (i2c) ========================================================================
 }
