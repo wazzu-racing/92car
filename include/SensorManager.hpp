@@ -5,7 +5,7 @@
 #include <Wire.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
 #include "BMI088.h"
-#include "row.hpp"
+#include "Row.hpp"
 #include <FlexCAN_T4.h>
 #include <MegaCAN.h>
 #include <TeensyThreads.h>

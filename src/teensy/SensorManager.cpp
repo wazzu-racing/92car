@@ -31,12 +31,12 @@ void SensorManager::setup() {
     }
 
     // set IMU interrupts
-    // pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT_PULLDOWN);
-    // pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLDOWN);
-    // pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLDOWN);
-    // attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, RISING);
-    // attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, RISING);
-    // attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
+    pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT_PULLDOWN);
+    pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLDOWN);
+    pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLDOWN);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, RISING);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, RISING);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
 
     log("setup IMU interrupts");
 
@@ -69,7 +69,7 @@ void SensorManager::loop() {
         accel_updated = false;
 
         accel.readSensor();
-        
+
         rowLock.lock();
         row.ax           = accel.getAccelX_mss() * 1000;
         row.ay           = accel.getAccelY_mss() * 1000;
@@ -108,12 +108,10 @@ void SensorManager::loop() {
     //     // rowLock.unlock();
     // }
 
-    log("done with gps");
 
     // ECU CAN ====================================================================================
     can_ecu.events();
-    log(std::to_string(can_ecu.read(msg)));
-    while (false) {
+    while (can_ecu.read(msg)) {
         log("message from can!!");
         if (msg.flags.extended) continue;
 
