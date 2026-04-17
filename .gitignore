@@ -4,3 +4,9 @@
 .vscode/launch.json
 .vscode/ipch
 .cache/
+
+
+.zed/
+.clangd
+AGENTS.md
+compile_commands.json
