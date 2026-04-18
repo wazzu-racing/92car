@@ -87,15 +87,15 @@ void handler(const CAN_message_t &msg) {
      tosend.imu_millis = millis();
  
      // log GPS
-    //   Serial.print("+");
-    //  if (myGNSS.getPVT(10)) {
-    //   Serial.print("-");tosend.unixtime = myGNSS.getUnixEpoch();
-    //   Serial.print("-");tosend.lat = myGNSS.getLatitude();
-    //   Serial.print("-");tosend.lon = myGNSS.getLongitude();
-    //   Serial.print("-");tosend.elev = myGNSS.getAltitude();
-    //   Serial.print("-");tosend.ground_speed = myGNSS.getGroundSpeed();	
-    //   Serial.print("-");tosend.gps_millis = millis();
-    //  }
+      Serial.print("+");
+     if (myGNSS.getPVT(10)) {
+      Serial.print("-");tosend.unixtime = myGNSS.getUnixEpoch();
+      Serial.print("-");tosend.lat = myGNSS.getLatitude();
+      Serial.print("-");tosend.lon = myGNSS.getLongitude();
+      Serial.print("-");tosend.elev = myGNSS.getAltitude();
+      Serial.print("-");tosend.ground_speed = myGNSS.getGroundSpeed();	
+      Serial.print("-");tosend.gps_millis = millis();
+     }
      Serial.print("done\n");
    }
 
