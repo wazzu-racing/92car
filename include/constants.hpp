@@ -22,6 +22,8 @@
 #define SENSOR_CAN_ID_RAD_OUT       0x100 + 8
 #define SENSOR_CAN_ID_DASHBOARD     0x100 + 9
 
+#define THERMOCOUPLE_I2C_BUS        Wire2
+
 #define TEENSY_PIN_GENERIC_0        0
 #define TEENSY_PIN_GENERIC_1        1
 #define TEENSY_PIN_MODE_BUTTON      2

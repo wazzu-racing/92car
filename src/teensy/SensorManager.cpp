@@ -22,17 +22,17 @@ void SensorManager::setup() {
     gps.setNavigationFrequency(1);
     gps.setAutoPVT(true);
 
-    if(accel.begin() < 0) {
-        log("error with Accel... cannot connect...");
+    if (accel.begin() < 0 || gyro.begin() < 0) {
+        log("error with IMU... cannot connect...");
     }
-    accel.setOdr(Bmi088Accel::ODR_100HZ_BW_40HZ);
+    accel.mapDrdyInt1(true);
+    // accel.setOdr(accel.ODR_200HZ_BW_38HZ);
+    gyro.mapDrdyInt3(true);
+    // gyro.setOdr(gyro.ODR_200HZ_BW_64HZ);
 
-    if(gyro.begin() < 0) {
-        log("error with Gyro... cannot connect...");
-    }
-    gyro.setOdr(Bmi088Gyro::ODR_100HZ_BW_32HZ);
-
-    // set GPS interrupt
+    // set IMU interrupts
+    pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT);
+    pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLDOWN);
     pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLDOWN);
     attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
 
@@ -41,10 +41,10 @@ void SensorManager::setup() {
     // setup ECU CAN interrupt
     can_ecu.begin();
     can_ecu.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
-    // can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
-    // can_ecu.enableFIFO();
-    // can_ecu.setFIFOFilter(ACCEPT_ALL); // or specific IDs
-    // can_ecu.mailboxStatus();
+    can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
+    can_ecu.enableFIFO();
+    can_ecu.setFIFOFilter(ACCEPT_ALL); // or specific IDs
+    can_ecu.mailboxStatus();
 
     log("set up can ecu interrupts");
 
@@ -54,24 +54,35 @@ void SensorManager::setup() {
     can_sensor.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
     can_sensor.enableFIFO();
     can_sensor.setFIFOFilter(ACCEPT_ALL); // or specific IDs
-    // can_sensor.mailboxStatus();
+    can_sensor.mailboxStatus();
 
     log("set up can sensor interrupts");
+
+
+    THERMOCOUPLE_I2C_BUS.begin();
 }
 
 void SensorManager::loop() {
     // accelerometer of IMU =======================================================================
-    accel.readSensor();
+    if (accel_updated) {
+        log("accel!!");
+        accel_updated = false;
 
-    rowLock.lock();
-    row.ax           = accel.getAccelX_mss() * 1000;
-    row.ay           = accel.getAccelY_mss() * 1000;
-    row.az           = accel.getAccelZ_mss() * 1000;
-    row.accel_millis = millis();
-    rowLock.unlock();
+        accel.readSensor();
+
+        rowLock.lock();
+        row.ax           = accel.getAccelX_mss() * 1000;
+        row.ay           = accel.getAccelY_mss() * 1000;
+        row.az           = accel.getAccelZ_mss() * 1000;
+        // Serial.println(row.az);
+        row.accel_millis = millis();
+        rowLock.unlock();
+    }
 
     // gyroscope of IMU ===========================================================================
-    gyro.readSensor();
+    if (gyro_updated) {
+        log("imu!");
+        gyro_updated = false;
 
     rowLock.lock();
     row.imu_x      = gyro.getGyroX_rads() * 1000;
@@ -80,15 +91,53 @@ void SensorManager::loop() {
     row.imu_millis = millis();
     rowLock.unlock();
 
+    if ((gps.getPVT(1) && (gps.getInvalidLlh() == false))) {
+        // log("gps!");
+
+        rowLock.lock();
+        row.unixtime      =  gps.getUnixEpoch();
+        row.lat           =  gps.getLatitude();
+        row.lon           =  gps.getLongitude();
+        row.elev          =  gps.getAltitude();
+        row.ground_speed  =  gps.getGroundSpeed();
+        row.gps_millis    = millis();
+        rowLock.unlock();
+    }
+    // else {
+    //     log("no gps");
+    // }
+
     // ECU CAN ====================================================================================
-    can_ecu.events();
     while (can_ecu.read(msg)) {
-        log("message from can!!");
-        if (msg.flags.extended) continue;
+        // log("message from can!!");
+        // Serial.println(msg.id);
+        // if (msg.flags.extended) continue;
 
         megaCAN.getBCastData(msg.id, msg.buf, ecu);
 
-        log(std::to_string(ecu.tps));
+        // Serial.print("RPM:\t\t\t");Serial.print(ecu.rpm);Serial.println("\tRPM");
+        // Serial.print("Time:\t\t\t");Serial.print(ecu.seconds);Serial.println("\tseconds");
+        // Serial.print("AFR1:\t\t\t");Serial.print(ecu.AFR1);Serial.println("\tAFR");
+        // Serial.print("spark advance:\t\t");Serial.print(ecu.adv_deg);Serial.println("\tdeg BTDC");
+        // Serial.print("barometric pressure:\t");Serial.print(ecu.baro);Serial.println("\tkPa");
+        // Serial.print("manifold pressure:\t");Serial.print(ecu.map);Serial.println("\tkPa");
+        // Serial.print("manifold temp:\t\t");Serial.print(ecu.mat);Serial.println("\tdeg F");
+        // Serial.print("coolant temp:\t\t");Serial.print(ecu.clt);Serial.println("\tdeg F");
+        // Serial.print("throttle position:\t");Serial.print(ecu.tps);Serial.println("\t%");
+        // Serial.print("battery voltage:\t");Serial.print(ecu.batt);Serial.println("\tV");
+        // Serial.print("oil pressure (egov2):\t");Serial.print(ecu.sensors1);Serial.println("\t");
+        // Serial.print("sync loss counter:\t");Serial.print(ecu.synccnt);Serial.println("\tcount");
+        // Serial.print("sync reason:\t\t");Serial.print(ecu.syncreason);Serial.println("\t(code)");
+        // Serial.print("launch control timing:\t");Serial.print(ecu.launch_timing);Serial.println("\tdeg");
+        // Serial.print("VE1:\t\t\t");Serial.print(ecu.ve1);Serial.println("\t%");
+        // Serial.print("VE2:\t\t\t");Serial.print(ecu.ve2);Serial.println("\t%");
+        // Serial.print("EGT:\t\t\t");Serial.print(ecu.egt1);Serial.println("\tdeg F");
+        // Serial.print("Mass air flow:\t\t");Serial.print(ecu.MAF);Serial.println("\tg/s");
+        // Serial.print("Intake air temp:\t");Serial.print(ecu.airtemp);Serial.println("\tdeg F");
+        // Serial.print("Gear:\t\t\t");Serial.print(ecu.gear);Serial.println("\t");
+        // Serial.print("\n\n");Serial.println("\t()");
+        // Serial.println(millis());
+
 
         rowLock.lock();
         row.rpm             = ecu.rpm;
