@@ -1,14 +1,10 @@
 #include "SensorManager.hpp"
 
-volatile bool gyro_updated = false;
-volatile bool accel_updated = false;
 volatile bool gps_updated = false;
 
 static CAN_message_t msg;
 static MegaCAN_broadcast_message_t ecu;
 
-void gyro_ISR() {gyro_updated = true;}
-void accel_ISR() {accel_updated = true;}
 void gps_ISR() {gps_updated = true;}
 
 void SensorManager::setup() {
@@ -26,19 +22,21 @@ void SensorManager::setup() {
     gps.setNavigationFrequency(1);
     gps.setAutoPVT(true);
 
-    if(accel.begin() < 0 || gyro.begin() < 0) {
-        log("error with IMU... cannot connect...");
+    if(accel.begin() < 0) {
+        log("error with Accel... cannot connect...");
     }
+    accel.setOdr(Bmi088Accel::ODR_100HZ_BW_40HZ);
 
-    // set IMU interrupts
-    pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT_PULLDOWN);
-    pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLDOWN);
+    if(gyro.begin() < 0) {
+        log("error with Gyro... cannot connect...");
+    }
+    gyro.setOdr(Bmi088Gyro::ODR_100HZ_BW_32HZ);
+
+    // set GPS interrupt
     pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLDOWN);
-    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, RISING);
-    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, RISING);
     attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
 
-    log("setup IMU interrupts");
+    log("setup sensors complete");
 
     // setup ECU CAN interrupt
     can_ecu.begin();
@@ -63,32 +61,24 @@ void SensorManager::setup() {
 
 void SensorManager::loop() {
     // accelerometer of IMU =======================================================================
-    if (accel_updated) {
-        accel_updated = false;
+    accel.readSensor();
 
-        accel.readSensor();
-
-        rowLock.lock();
-        row.ax           = accel.getAccelX_mss() * 1000;
-        row.ay           = accel.getAccelY_mss() * 1000;
-        row.az           = accel.getAccelZ_mss() * 1000;
-        row.accel_millis = millis();
-        rowLock.unlock();
-    }
+    rowLock.lock();
+    row.ax           = accel.getAccelX_mss() * 1000;
+    row.ay           = accel.getAccelY_mss() * 1000;
+    row.az           = accel.getAccelZ_mss() * 1000;
+    row.accel_millis = millis();
+    rowLock.unlock();
 
     // gyroscope of IMU ===========================================================================
-    if (gyro_updated) {
-        gyro_updated = false;
+    gyro.readSensor();
 
-        gyro.readSensor();
-
-        rowLock.lock();
-        row.imu_x      = gyro.getGyroX_rads() * 1000;
-        row.imu_y      = gyro.getGyroY_rads() * 1000;
-        row.imu_z      = gyro.getGyroZ_rads() * 1000;
-        row.imu_millis = millis();
-        rowLock.unlock();
-    }
+    rowLock.lock();
+    row.imu_x      = gyro.getGyroX_rads() * 1000;
+    row.imu_y      = gyro.getGyroY_rads() * 1000;
+    row.imu_z      = gyro.getGyroZ_rads() * 1000;
+    row.imu_millis = millis();
+    rowLock.unlock();
 
     // ECU CAN ====================================================================================
     can_ecu.events();
@@ -160,4 +150,9 @@ void SensorManager::loop() {
         }
         rowLock.unlock();
     }
+
+    // // Toggle LED to show thread is alive
+    // digitalWrite(TEENSY_PIN_LED_2, !digitalRead(TEENSY_PIN_LED_2));
+
+    threads.delay(10); // Run at ~100Hz to match IMU ODR
 }
