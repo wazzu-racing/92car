@@ -1,10 +1,14 @@
 #include "SensorManager.hpp"
 
+volatile bool gyro_updated = false;
+volatile bool accel_updated = false;
 volatile bool gps_updated = false;
 
 static CAN_message_t msg;
 static MegaCAN_broadcast_message_t ecu;
 
+void gyro_ISR() {gyro_updated = true;}
+void accel_ISR() {accel_updated = true;}
 void gps_ISR() {gps_updated = true;}
 
 void SensorManager::setup() {
@@ -34,9 +38,11 @@ void SensorManager::setup() {
     pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT);
     pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLDOWN);
     pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLDOWN);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, RISING);
+    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, RISING);
     attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
 
-    log("setup sensors complete");
+    log("setup IMU interrupts");
 
     // setup ECU CAN interrupt
     can_ecu.begin();
@@ -84,12 +90,15 @@ void SensorManager::loop() {
         log("imu!");
         gyro_updated = false;
 
-    rowLock.lock();
-    row.imu_x      = gyro.getGyroX_rads() * 1000;
-    row.imu_y      = gyro.getGyroY_rads() * 1000;
-    row.imu_z      = gyro.getGyroZ_rads() * 1000;
-    row.imu_millis = millis();
-    rowLock.unlock();
+        gyro.readSensor();
+
+        rowLock.lock();
+        row.imu_x      = gyro.getGyroX_rads() * 1000;
+        row.imu_y      = gyro.getGyroY_rads() * 1000;
+        row.imu_z      = gyro.getGyroZ_rads() * 1000;
+        row.imu_millis = millis();
+        rowLock.unlock();
+    }
 
     if ((gps.getPVT(1) && (gps.getInvalidLlh() == false))) {
         // log("gps!");
@@ -99,9 +108,9 @@ void SensorManager::loop() {
         row.lat           =  gps.getLatitude();
         row.lon           =  gps.getLongitude();
         row.elev          =  gps.getAltitude();
-        row.ground_speed  =  gps.getGroundSpeed();
+        row.ground_speed  =  gps.getGroundSpeed();	
         row.gps_millis    = millis();
-        rowLock.unlock();
+        rowLock.unlock();   
     }
     // else {
     //     log("no gps");
@@ -199,9 +208,4 @@ void SensorManager::loop() {
         }
         rowLock.unlock();
     }
-
-    // // Toggle LED to show thread is alive
-    // digitalWrite(TEENSY_PIN_LED_2, !digitalRead(TEENSY_PIN_LED_2));
-
-    threads.delay(10); // Run at ~100Hz to match IMU ODR
 }
