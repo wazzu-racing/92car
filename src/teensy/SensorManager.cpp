@@ -10,6 +10,9 @@ static MegaCAN_broadcast_message_t ecu;
 void gyro_ISR() {gyro_updated = true;}
 void accel_ISR() {accel_updated = true;}
 void gps_ISR() {gps_updated = true;}
+void accel_ISR() {accel_updated = true;}
+void gyro_ISR() {gyro_updated = true;}
+
 
 void SensorManager::setup() {
     log("Setup SensorManager");
@@ -114,9 +117,9 @@ void SensorManager::loop() {
         row.lat           =  gps.getLatitude();
         row.lon           =  gps.getLongitude();
         row.elev          =  gps.getAltitude();
-        row.ground_speed  =  gps.getGroundSpeed();	
+        row.ground_speed  =  gps.getGroundSpeed();
         row.gps_millis    = millis();
-        rowLock.unlock();   
+        rowLock.unlock();
     }
     // else {
     //     log("no gps");
@@ -185,13 +188,21 @@ void SensorManager::loop() {
         rowLock.lock();
         switch (msg.id) {
             case SENSOR_CAN_ID_DASHBOARD:
-                // row.rpm = (int)msg.buf[0];
+                row.susp_pot_1 = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
+                row.susp_pot_2 = (int16_t)(msg.buf[2] | (msg.buf[3] << 8));
+                row.brake1     = (int16_t)(msg.buf[4] | (msg.buf[5] << 8));
+                row.brake2     = (int16_t)(msg.buf[6] | (msg.buf[7] << 8));
+                break;
+            case SENSOR_CAN_ID_DASHBOARD + 1:
+                row.steering = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
+                row.amb_air_temp = (int16_t)(msg.buf[2] | (msg.buf[3] << 8));
+                row.steering_millis = millis();
                 break;
             case SENSOR_CAN_ID_BRAKE_1:
-                row.brake1 = (int)*msg.buf;
+                row.brake1 = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
                 break;
             case SENSOR_CAN_ID_BRAKE_2:
-                row.brake2 = (int)*msg.buf;
+                row.brake2 = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
                 break;
             case SENSOR_CAN_ID_SUSPOT_FL:
                 row.susp_pot_FL = (int)*msg.buf;
@@ -200,10 +211,10 @@ void SensorManager::loop() {
                 row.susp_pot_FR = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_RAD_IN:
-                row.rad_in = (int)*msg.buf;
+                row.rad_in = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
                 break;
             case SENSOR_CAN_ID_RAD_OUT:
-                row.rad_out = (int)*msg.buf;
+                row.rad_out = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
                 break;
         }
         row.breakout_millis = millis();
