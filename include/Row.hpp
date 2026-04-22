@@ -9,7 +9,7 @@ typedef struct Row{
     int imu_millis; // done
     int accel_millis; // done
     int analog_millis; // done
-    int thermo_millis;
+    int thermo_millis; // done
 
     int rpm; // done
     int time; // done
@@ -54,8 +54,8 @@ typedef struct Row{
     int rad_in; // done
     int rad_out; // done
     int steering; // done
-    int thermo_1;
-    int thermo_2;
-    int thermo_3;
-    int thermo_4;
+    int thermo_1; // done
+    int thermo_2; // done
+    int thermo_3; // done
+    int thermo_4; // done
 };

@@ -239,5 +239,6 @@ void SensorManager::loop() {
     row.thermo_2 = mcp[1].readThermocouple() * 1000;
     row.thermo_3 = mcp[2].readThermocouple() * 1000;
     row.thermo_4 = mcp[3].readThermocouple() * 1000;
+    row.thermo_millis = millis();
     rowLock.lock();
 }
