@@ -17,9 +17,8 @@
 #define SENSOR_CAN_ID_BRAKE_2       0x100 + 2
 #define SENSOR_CAN_ID_SUSPOT_FL     0x100 + 3
 #define SENSOR_CAN_ID_SUSPOT_FR     0x100 + 4
-#define SENSOR_CAN_ID_RAD_IN        0x100 + 5
-#define SENSOR_CAN_ID_RAD_OUT       0x100 + 6
-#define SENSOR_CAN_ID_STEERING      0x100 + 7
+#define SENSOR_CAN_ID_STEERING      0x100 + 5
+#define SENSOR_CAN_ID_AMBAIR        0x100 + 6
 
 #define THERMOCOUPLE_I2C_BUS        Wire1
 

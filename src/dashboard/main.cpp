@@ -2,14 +2,14 @@
 #include <Arduino.h>
 #include <FlexCAN_T4.h>
 
-#include <GBALib_Potentiometer.h>
-#include <PressureTransducer.h>
+// #include <GBALib_Potentiometer.h>
+// #include <PressureTransducer.h>
 
 FlexCAN_T4<TEENSY_CAN_SENSOR, RX_SIZE_256, TX_SIZE_16> can_sensor;
 
-GBALib_Potentiometer susp_pot_fl(BREAKOUT_TEENSY_PIN_SUSP_POT_FL);
-GBALib_Potentiometer susp_pot_fr(BREAKOUT_TEENSY_PIN_SUSP_POT_FR);
-GBALib_Potentiometer steering(BREAKOUT_TEENSY_PIN_STEERING);
+// GBALib_Potentiometer susp_pot_fl(BREAKOUT_TEENSY_PIN_SUSP_POT_FL);
+// GBALib_Potentiometer susp_pot_fr(BREAKOUT_TEENSY_PIN_SUSP_POT_FR);
+// GBALib_Potentiometer steering(BREAKOUT_TEENSY_PIN_STEERING);
 
 // Brake Pressure: Assuming 0.5V - 4.5V for 0 - 2000 PSI (common automotive
 // spec) Parameters: pin, minPressure, maxPressure, minVoltage, maxVoltage,
@@ -53,44 +53,72 @@ void setup() {
   can_sensor.enableFIFO();
   can_sensor.setFIFOFilter(ACCEPT_ALL);
 
-  susp_pot_fl.range(0, 1000); // 0-1000 scale for better precision over CAN
-  susp_pot_fr.range(0, 1000);
-  steering.range(0, 1000);
+  pinMode(BREAKOUT_TEENSY_PIN_AIR_TEMP, INPUT);
+  pinMode(BREAKOUT_TEENSY_PIN_BRAKE_1, INPUT);
+  pinMode(BREAKOUT_TEENSY_PIN_BRAKE_2, INPUT);
+  pinMode(BREAKOUT_TEENSY_PIN_STEERING, INPUT);
+  pinMode(BREAKOUT_TEENSY_PIN_SUSP_POT_FL, INPUT);
+  pinMode(BREAKOUT_TEENSY_PIN_SUSP_POT_FR, INPUT);
+
+  // susp_pot_fl.range(0, 1000); // 0-1000 scale for better precision over CAN
+  // susp_pot_fr.range(0, 1000);
+  // steering.range(0, 1000);
 
   // brake_1.begin();
   // brake_2.begin();
 }
 
 void loop() {
+  Serial.println("loop");
   // Read and scale to integers for CAN transmission
-  int val_fl = susp_pot_fl.value();
-  int val_fr = susp_pot_fr.value();
-  int val_steer = steering.value();
+  // int val_fl = susp_pot_fl.value();
+  // int val_fr = susp_pot_fr.value();
+  // int val_steer = steering.value();
 
-  // Pressure in PSI * 10 (e.g. 1250 = 125.0 PSI)
-  // int val_b1 = (int)(brake_1.readPressure() * 10);
-  // int val_b2 = (int)(brake_2.readPressure() * 10);
+  // // Pressure in PSI * 10 (e.g. 1250 = 125.0 PSI)
+  // // int val_b1 = (int)(brake_1.readPressure() * 10);
+  // // int val_b2 = (int)(brake_2.readPressure() * 10);
 
-  int val_b1 = 0;
-  int val_b2 = 0;
-  int val_air = 0;
+  // int val_b1 = 0;
+  // int val_b2 = 0;
+  // int val_air = 0;
   // // Temp in Celsius * 10 (e.g. 255 = 25.5 C)
   // int val_air = (int)(readThermistor(BREAKOUT_TEENSY_PIN_AIR_TEMP) * 10);
 
   can_sensor.events();
 
-  CAN_message_t msg_fl;
-  msg_fl.id = SENSOR_CAN_ID_SUSPOT_FL;
-  msg_fl.len = 8;
-  memcpy(msg_fl.buf, val_fl , 8);
-  can_sensor.write(msg_fl);
+  CAN_message_t msg;
+  msg.id = SENSOR_CAN_ID_AMBAIR;
+  msg.len = 8;
+  memcpy(msg.buf, (void*)analogRead(BREAKOUT_TEENSY_PIN_AIR_TEMP) , 8);
+  can_sensor.write(msg);
+
+  msg.id = SENSOR_CAN_ID_BRAKE_1;
+  msg.len = 8;
+  memcpy(msg.buf, (void*)analogRead(BREAKOUT_TEENSY_PIN_BRAKE_1) , 8);
+  can_sensor.write(msg);
+
+  msg.id = SENSOR_CAN_ID_BRAKE_2;
+  msg.len = 8;
+  memcpy(msg.buf, (void*)analogRead(BREAKOUT_TEENSY_PIN_BRAKE_2) , 8);
+  can_sensor.write(msg);
+
+  msg.id = SENSOR_CAN_ID_STEERING;
+  msg.len = 8;
+  memcpy(msg.buf, (void*)analogRead(BREAKOUT_TEENSY_PIN_STEERING) , 8);
+  can_sensor.write(msg);
+
+  msg.id = SENSOR_CAN_ID_SUSPOT_FL;
+  msg.len = 8;
+  memcpy(msg.buf, (void*)analogRead(BREAKOUT_TEENSY_PIN_SUSP_POT_FL) , 8);
+  can_sensor.write(msg);
+
+  msg.id = SENSOR_CAN_ID_SUSPOT_FR;
+  msg.len = 8;
+  memcpy(msg.buf, (void*)analogRead(BREAKOUT_TEENSY_PIN_SUSP_POT_FR) , 8);
+  can_sensor.write(msg);
 
 
-  CAN_message_t msg_fr;
-  msg_fr.id = SENSOR_CAN_ID_SUSPOT_FR;
-  msg_fr.len = 8;
-  memcpy(msg_fr.buf, val_fr , 8);
-  can_sensor.write(msg_fr);
 
   // msg.id = SENSOR_CAN_ID_DASHBOARD;
   // msg.len = 8; // Use full buffer

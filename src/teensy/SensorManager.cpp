@@ -10,9 +10,6 @@ static MegaCAN_broadcast_message_t ecu;
 void gyro_ISR() {gyro_updated = true;}
 void accel_ISR() {accel_updated = true;}
 void gps_ISR() {gps_updated = true;}
-void accel_ISR() {accel_updated = true;}
-void gyro_ISR() {gyro_updated = true;}
-
 
 void SensorManager::setup() {
     log("Setup SensorManager");
@@ -53,7 +50,7 @@ void SensorManager::setup() {
     log("end thermo");
 
     for (int i=0; i<4; i++) {
-        // mcp[i] = 
+        // // mcp[i] = 
         // mcp[i]->setAmbientResolution(ambientRes);
         // mcp[i]->setADCresolution(MCP9600_ADCRESOLUTION_18);
         // mcp[i]->setThermocoupleType(MCP9600_TYPE_K);
@@ -135,9 +132,9 @@ void SensorManager::loop() {
         row.lat           =  gps.getLatitude();
         row.lon           =  gps.getLongitude();
         row.elev          =  gps.getAltitude();
-        row.ground_speed  =  gps.getGroundSpeed();
+        row.ground_speed  =  gps.getGroundSpeed();	
         row.gps_millis    = millis();
-        rowLock.unlock();
+        rowLock.unlock();   
     }
     // else {
     //     log("no gps");
@@ -205,34 +202,20 @@ void SensorManager::loop() {
     while (can_sensor.read(msg)) {
         rowLock.lock();
         switch (msg.id) {
-            case SENSOR_CAN_ID_DASHBOARD:
-                row.susp_pot_1 = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
-                row.susp_pot_2 = (int16_t)(msg.buf[2] | (msg.buf[3] << 8));
-                row.brake1     = (int16_t)(msg.buf[4] | (msg.buf[5] << 8));
-                row.brake2     = (int16_t)(msg.buf[6] | (msg.buf[7] << 8));
-                break;
-            case SENSOR_CAN_ID_DASHBOARD + 1:
-                row.steering = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
-                row.amb_air_temp = (int16_t)(msg.buf[2] | (msg.buf[3] << 8));
-                row.steering_millis = millis();
+            case SENSOR_CAN_ID_AMBAIR:
+                row.amb_air_temp = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_BRAKE_1:
-                row.brake1 = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
+                row.brake1 = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_BRAKE_2:
-                row.brake2 = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
+                row.brake2 = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_SUSPOT_FL:
                 row.susp_pot_FL = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_SUSPOT_FR:
                 row.susp_pot_FR = (int)*msg.buf;
-                break;
-            case SENSOR_CAN_ID_RAD_IN:
-                row.rad_in = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
-                break;
-            case SENSOR_CAN_ID_RAD_OUT:
-                row.rad_out = (int16_t)(msg.buf[0] | (msg.buf[1] << 8));
                 break;
             case SENSOR_CAN_ID_STEERING:
                 row.steering = (int)*msg.buf;
@@ -244,6 +227,7 @@ void SensorManager::loop() {
 
     // ONBOARD ANALOG =============================================================================
     rowLock.lock();
+    log("analog...");
     row.susp_pot_RL = analogRead(TEENSY_PIN_SUSPOT_RL);
     row.susp_pot_RR = analogRead(TEENSY_PIN_SUSPOT_RR);
     row.rad_in = analogRead(TEENSY_PIN_RAD_IN);
@@ -253,12 +237,12 @@ void SensorManager::loop() {
     rowLock.unlock();
 
     // THERMOCOUPLE ===============================================================================
-    // rowLock.unlock();
+    // rowLock.lock();
     // row.thermo_1 = mcp[0]->readThermocouple() * 1000;
     // row.thermo_2 = mcp[1]->readThermocouple() * 1000;
     // row.thermo_3 = mcp[2]->readThermocouple() * 1000;
     // row.thermo_4 = mcp[3]->readThermocouple() * 1000;
     // for (int i=0; i<4; i++) Serial.println(mcp[i]->readThermocouple());
     // row.thermo_millis = millis();
-    // rowLock.lock();
+    // rowLock.unlock();
 }
