@@ -1,7 +1,5 @@
 #include "SensorManager.hpp"
 
-volatile bool gyro_updated = false;
-volatile bool accel_updated = false;
 volatile bool gps_updated = false;
 volatile bool accel_updated = false;
 volatile bool gyro_updated = false;
@@ -35,6 +33,12 @@ void SensorManager::setup() {
     // accel.setOdr(accel.ODR_200HZ_BW_38HZ);
     gyro.mapDrdyInt3(true);
     // gyro.setOdr(gyro.ODR_200HZ_BW_64HZ);
+
+
+    pinMode(TEENSY_PIN_SUSPOT_RL, INPUT);
+    pinMode(TEENSY_PIN_SUSPOT_RR, INPUT);
+    pinMode(TEENSY_PIN_RAD_IN, INPUT);
+    pinMode(TEENSY_PIN_RAD_OUT, INPUT);
 
     // set IMU interrupts
     pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT);
@@ -91,7 +95,6 @@ void SensorManager::loop() {
     if (gyro_updated) {
         log("imu!");
         gyro_updated = false;
-    }
 
         gyro.readSensor();
 
@@ -190,10 +193,10 @@ void SensorManager::loop() {
             case SENSOR_CAN_ID_BRAKE_2:
                 row.brake2 = (int)*msg.buf;
                 break;
-            case SENSOR_CAN_ID_SUSPOT_3:
+            case SENSOR_CAN_ID_SUSPOT_FL:
                 row.susp_pot_FL = (int)*msg.buf;
                 break;
-            case SENSOR_CAN_ID_SUSPOT_4:
+            case SENSOR_CAN_ID_SUSPOT_FR:
                 row.susp_pot_FR = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_RAD_IN:

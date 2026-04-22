@@ -12,15 +12,14 @@
 #define ANALOGX_3_CAN_ID            0xE4900
 
 #define ECU_BASE_CAN_ID             1512
+// #define SENSOR_CAN_ID_BREAKOUT      0x100
 #define SENSOR_CAN_ID_BRAKE_1       0x100 + 1
 #define SENSOR_CAN_ID_BRAKE_2       0x100 + 2
-#define SENSOR_CAN_ID_SUSPOT_1      0x100 + 3
-#define SENSOR_CAN_ID_SUSPOT_2      0x100 + 4
-#define SENSOR_CAN_ID_SUSPOT_3      0x100 + 5
-#define SENSOR_CAN_ID_SUSPOT_4      0x100 + 6
-#define SENSOR_CAN_ID_RAD_IN        0x100 + 7
-#define SENSOR_CAN_ID_RAD_OUT       0x100 + 8
-#define SENSOR_CAN_ID_DASHBOARD     0x100 + 9
+#define SENSOR_CAN_ID_SUSPOT_FL     0x100 + 3
+#define SENSOR_CAN_ID_SUSPOT_FR     0x100 + 4
+#define SENSOR_CAN_ID_RAD_IN        0x100 + 5
+#define SENSOR_CAN_ID_RAD_OUT       0x100 + 6
+#define SENSOR_CAN_ID_STEERING      0x100 + 7
 
 #define THERMOCOUPLE_I2C_BUS        Wire2
 
