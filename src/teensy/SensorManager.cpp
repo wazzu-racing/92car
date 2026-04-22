@@ -34,11 +34,27 @@ void SensorManager::setup() {
     gyro.mapDrdyInt3(true);
     // gyro.setOdr(gyro.ODR_200HZ_BW_64HZ);
 
-
     pinMode(TEENSY_PIN_SUSPOT_RL, INPUT);
     pinMode(TEENSY_PIN_SUSPOT_RR, INPUT);
     pinMode(TEENSY_PIN_RAD_IN, INPUT);
     pinMode(TEENSY_PIN_RAD_OUT, INPUT);
+    pinMode(TEENSY_PIN_OIL_TEMP, INPUT);
+
+    THERMOCOUPLE_I2C_BUS.begin();
+    mcp[0].begin(THERMOCOUPLE_1_ID, &THERMOCOUPLE_I2C_BUS);
+    mcp[1].begin(THERMOCOUPLE_2_ID, &THERMOCOUPLE_I2C_BUS);
+    mcp[2].begin(THERMOCOUPLE_3_ID, &THERMOCOUPLE_I2C_BUS);
+    mcp[3].begin(THERMOCOUPLE_4_ID, &THERMOCOUPLE_I2C_BUS);
+
+    for (int i=0; i<4; i++) {
+        mcp[i].setAmbientResolution(ambientRes);
+        mcp[i].setADCresolution(MCP9600_ADCRESOLUTION_18);
+        mcp[i].setThermocoupleType(MCP9600_TYPE_K);
+        mcp[i].setFilterCoefficient(3);
+        mcp[i].setAlertTemperature(1, 30);
+        mcp[i].configureAlert(1, true, true);
+        mcp[i].enable(true);
+    }
 
     // set IMU interrupts
     pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT);
@@ -69,9 +85,6 @@ void SensorManager::setup() {
     can_sensor.mailboxStatus();
 
     log("set up can sensor interrupts");
-
-
-    THERMOCOUPLE_I2C_BUS.begin();
 }
 
 void SensorManager::loop() {
@@ -184,9 +197,6 @@ void SensorManager::loop() {
     while (can_sensor.read(msg)) {
         rowLock.lock();
         switch (msg.id) {
-            case SENSOR_CAN_ID_DASHBOARD:
-                // row.rpm = (int)msg.buf[0];
-                break;
             case SENSOR_CAN_ID_BRAKE_1:
                 row.brake1 = (int)*msg.buf;
                 break;
@@ -205,6 +215,9 @@ void SensorManager::loop() {
             case SENSOR_CAN_ID_RAD_OUT:
                 row.rad_out = (int)*msg.buf;
                 break;
+            case SENSOR_CAN_ID_STEERING:
+                row.steering = (int)*msg.buf;
+                break;
         }
         row.breakout_millis = millis();
         rowLock.unlock();
@@ -216,7 +229,15 @@ void SensorManager::loop() {
     row.susp_pot_RR = analogRead(TEENSY_PIN_SUSPOT_RR);
     row.rad_in = analogRead(TEENSY_PIN_RAD_IN);
     row.rad_out = analogRead(TEENSY_PIN_RAD_OUT);
+    row.oil_temp = analogRead(TEENSY_PIN_OIL_TEMP);
     row.analog_millis = millis();
     rowLock.lock();
 
+    // THERMOCOUPLE ===============================================================================
+    rowLock.unlock();
+    row.thermo_1 = mcp[0].readThermocouple() * 1000;
+    row.thermo_2 = mcp[1].readThermocouple() * 1000;
+    row.thermo_3 = mcp[2].readThermocouple() * 1000;
+    row.thermo_4 = mcp[3].readThermocouple() * 1000;
+    rowLock.lock();
 }

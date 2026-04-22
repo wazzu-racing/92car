@@ -5,6 +5,7 @@
 #include <Wire.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
 #include "BMI088.h"
+#include "Adafruit_MCP9600.h"
 #include "Row.hpp"
 #include <FlexCAN_T4.h>
 #include <MegaCAN.h>
@@ -32,4 +33,8 @@ private:
 
     Row& row;
     Threads::Mutex& rowLock;
+
+    Adafruit_MCP9600 mcp[4];
+
+    Ambient_Resolution ambientRes = RES_ZERO_POINT_0625;
 };

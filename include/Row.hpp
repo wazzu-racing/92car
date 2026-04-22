@@ -13,14 +13,14 @@ typedef struct Row{
 
     int rpm; // done
     int time; // done
-    int syncloss_count;
-    int syncloss_code;
+    int syncloss_count; // done
+    int syncloss_code; // done
     int lat; // done
     int lon; // done
     int elev; // done
     int unixtime; // done
     int ground_speed; // done
-    int quickshift;
+    // int quickshift;
     // floats...
     int afr; // done
     int fuelload; // done
@@ -43,19 +43,19 @@ typedef struct Row{
     int imu_x; // done
     int imu_y; // done
     int imu_z; // done
-    int susp_pot_FL;
-    int susp_pot_FR;
+    int susp_pot_FL; // done
+    int susp_pot_FR; // done
     int susp_pot_RL; // done
     int susp_pot_RR; // done
+    int oil_temp; // done
     int amb_air_temp; // done
     int brake1; // done
     int brake2; // done
     int rad_in; // done
     int rad_out; // done
-    int steering;
+    int steering; // done
     int thermo_1;
     int thermo_2;
     int thermo_3;
     int thermo_4;
-    int oil_temp;
 };
