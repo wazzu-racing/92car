@@ -3,6 +3,8 @@
 volatile bool gyro_updated = false;
 volatile bool accel_updated = false;
 volatile bool gps_updated = false;
+volatile bool accel_updated = false;
+volatile bool gyro_updated = false;
 
 static CAN_message_t msg;
 static MegaCAN_broadcast_message_t ecu;
@@ -89,6 +91,7 @@ void SensorManager::loop() {
     if (gyro_updated) {
         log("imu!");
         gyro_updated = false;
+    }
 
         gyro.readSensor();
 
