@@ -2,53 +2,60 @@
 
 // The main row struct.
 typedef struct Row{
-    int write_millis;
-    int ecu_millis;
-    int gps_millis;
-    int imu_millis;
-    int accel_millis;
-    int analogx1_millis;
-    int analogx2_millis;
-    int analogx3_millis;
-    int rpm;
-    int time;
+    int write_millis; // done
+    int ecu_millis; // done
+    int breakout_millis; // done
+    int gps_millis; // done
+    int imu_millis; // done
+    int accel_millis; // done
+    int analog_millis; // done
+    int thermo_millis;
+
+    int rpm; // done
+    int time; // done
     int syncloss_count;
     int syncloss_code;
-    int lat;
-    int lon;
-    int elev;
-    int unixtime;
-    int ground_speed;
+    int lat; // done
+    int lon; // done
+    int elev; // done
+    int unixtime; // done
+    int ground_speed; // done
+    int quickshift;
     // floats...
-    int afr;
-    int fuelload;
-    int spark_advance;
-    int baro;
-    int map;
-    int mat;
-    int clnt_temp;
-    int tps;
-    int batt;
-    int oil_press;
-    int ltcl_timing;
-    int ve1;
-    int ve2;
-    int egt;
-    int maf;
-    int in_temp;
-    int ax;
-    int ay;
-    int az;
-    int imu_x;
-    int imu_y;
-    int imu_z;
-    int susp_pot_1;
-    int susp_pot_2;
-    int susp_pot_3;
-    int susp_pot_4;
-    int rad_in;
-    int rad_out;
-    int amb_air_temp;
-    int brake1;
-    int brake2;
+    int afr; // done
+    int fuelload; // done
+    int spark_advance; // done
+    int baro; // done
+    int map; // done
+    int mat; // done
+    int clnt_temp; // done
+    int tps; // done
+    int batt; // done
+    int oil_press; // done
+    int ltcl_timing; // done
+    int ve1; // done
+    int ve2; // done
+    int maf; // done
+    int in_temp; // done
+    int ax; // done
+    int ay; // done
+    int az; // done
+    int imu_x; // done
+    int imu_y; // done
+    int imu_z; // done
+    int susp_pot_FL;
+    int susp_pot_FR;
+    int susp_pot_RL; // done
+    int susp_pot_RR; // done
+    int amb_air_temp; // done
+    int brake1; // done
+    int brake2; // done
+    int rad_in; // done
+    int rad_out; // done
+    int steering;
+    int thermo_1;
+    int thermo_2;
+    int thermo_3;
+    int thermo_4;
+    int oil_temp;
 };

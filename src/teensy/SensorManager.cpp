@@ -151,6 +151,7 @@ void SensorManager::loop() {
         rowLock.lock();
         row.rpm             = ecu.rpm;
         row.time            = ecu.seconds;
+        // row.quickshift      = ecu.
         row.afr             = ecu.AFR1          * 1000;
         row.fuelload        = ecu.fuelload      * 1000;
         row.spark_advance   = ecu.adv_deg       * 1000;
@@ -166,7 +167,6 @@ void SensorManager::loop() {
         row.ltcl_timing     = ecu.launch_timing * 1000;
         row.ve1             = ecu.ve1           * 1000;
         row.ve2             = ecu.ve2           * 1000;
-        row.egt             = ecu.egt1          * 1000;
         row.maf             = ecu.MAF           * 1000;
         row.in_temp         = ecu.airtemp       * 1000;
         row.ecu_millis      = millis();
@@ -187,17 +187,11 @@ void SensorManager::loop() {
             case SENSOR_CAN_ID_BRAKE_2:
                 row.brake2 = (int)*msg.buf;
                 break;
-            case SENSOR_CAN_ID_SUSPOT_1:
-                row.susp_pot_1 = (int)*msg.buf;
-                break;
-            case SENSOR_CAN_ID_SUSPOT_2:
-                row.susp_pot_2 = (int)*msg.buf;
-                break;
             case SENSOR_CAN_ID_SUSPOT_3:
-                row.susp_pot_3 = (int)*msg.buf;
+                row.susp_pot_FL = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_SUSPOT_4:
-                row.susp_pot_4 = (int)*msg.buf;
+                row.susp_pot_FR = (int)*msg.buf;
                 break;
             case SENSOR_CAN_ID_RAD_IN:
                 row.rad_in = (int)*msg.buf;
@@ -206,6 +200,17 @@ void SensorManager::loop() {
                 row.rad_out = (int)*msg.buf;
                 break;
         }
+        row.breakout_millis = millis();
         rowLock.unlock();
     }
+
+    // ONBOARD ANALOG =============================================================================
+    rowLock.unlock();
+    row.susp_pot_RL = analogRead(TEENSY_PIN_SUSPOT_RL);
+    row.susp_pot_RR = analogRead(TEENSY_PIN_SUSPOT_RR);
+    row.rad_in = analogRead(TEENSY_PIN_RAD_IN);
+    row.rad_out = analogRead(TEENSY_PIN_RAD_OUT);
+    row.analog_millis = millis();
+    rowLock.lock();
+
 }

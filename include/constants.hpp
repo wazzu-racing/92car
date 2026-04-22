@@ -11,7 +11,7 @@
 #define ANALOGX_2_CAN_ID            0xE4800
 #define ANALOGX_3_CAN_ID            0xE4900
 
-#define ECU_BASE_CAN_ID             0x0
+#define ECU_BASE_CAN_ID             1512
 #define SENSOR_CAN_ID_BRAKE_1       0x100 + 1
 #define SENSOR_CAN_ID_BRAKE_2       0x100 + 2
 #define SENSOR_CAN_ID_SUSPOT_1      0x100 + 3
@@ -38,7 +38,7 @@
 #define TEENSY_PIN_SCREEN_MOSI      11
 #define TEENSY_PIN_SCREEN_RST       12
 #define TEENSY_PIN_SCREEN_SCK       13
-#define TEENSY_PIN_GENERIC_14       14
+#define TEENSY_PIN_RAD_OUT          14
 #define TEENSY_PIN_GENERIC_15       15
 #define TEENSY_PIN_SEGMENT_SCL      16
 #define TEENSY_PIN_SEGMENT_SDA      17
@@ -59,8 +59,8 @@
 #define TEENSY_PIN_GYRO_INTERRUPT   20
 #define TEENSY_PIN_ACEL_INTERRUPT   21
 
-#define TEENSY_PIN_GENERIC_26       26
-#define TEENSY_PIN_GENERIC_27       27
+#define TEENSY_PIN_SUSPOT_RL        26
+#define TEENSY_PIN_SUSPOT_RR        27
 #define TEENSY_PIN_LED_0            28 // Status indicator for dashboardManager
 #define TEENSY_PIN_LED_1            29 // Status indicator for dataloggerManager
 #define TEENSY_PIN_CAN_SENSOR_RX    30 // CAN 3
@@ -75,5 +75,5 @@
 #define TEENSY_PIN_LED_2            37 // Status indicator for sensorManager
 #define TEENSY_PIN_LED_SHIFT        38
 #define TEENSY_PIN_MARKER           39
-#define TEENSY_PIN_GENERIC_40       40
+#define TEENSY_PIN_RAD_IN           40
 #define TEENSY_PIN_GPS_INTERRUPT    41
