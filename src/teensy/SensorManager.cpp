@@ -40,22 +40,27 @@ void SensorManager::setup() {
     pinMode(TEENSY_PIN_RAD_OUT, INPUT);
     pinMode(TEENSY_PIN_OIL_TEMP, INPUT);
 
+    log("start thermocouple");
     THERMOCOUPLE_I2C_BUS.begin();
-    mcp[0].begin(THERMOCOUPLE_1_ID, &THERMOCOUPLE_I2C_BUS);
-    mcp[1].begin(THERMOCOUPLE_2_ID, &THERMOCOUPLE_I2C_BUS);
-    mcp[2].begin(THERMOCOUPLE_3_ID, &THERMOCOUPLE_I2C_BUS);
-    mcp[3].begin(THERMOCOUPLE_4_ID, &THERMOCOUPLE_I2C_BUS);
+    mcp[0]->begin(THERMOCOUPLE_1_ID, &THERMOCOUPLE_I2C_BUS);
+    mcp[1]->begin(THERMOCOUPLE_2_ID, &THERMOCOUPLE_I2C_BUS);
+    mcp[2]->begin(THERMOCOUPLE_3_ID, &THERMOCOUPLE_I2C_BUS);
+    mcp[3]->begin(THERMOCOUPLE_4_ID, &THERMOCOUPLE_I2C_BUS);
+
+    log("end thermo");
 
     for (int i=0; i<4; i++) {
-        mcp[i].setAmbientResolution(ambientRes);
-        mcp[i].setADCresolution(MCP9600_ADCRESOLUTION_18);
-        mcp[i].setThermocoupleType(MCP9600_TYPE_K);
-        mcp[i].setFilterCoefficient(3);
-        mcp[i].setAlertTemperature(1, 30);
-        mcp[i].configureAlert(1, true, true);
-        mcp[i].enable(true);
+        // mcp[i] = 
+        // mcp[i]->setAmbientResolution(ambientRes);
+        // mcp[i]->setADCresolution(MCP9600_ADCRESOLUTION_18);
+        // mcp[i]->setThermocoupleType(MCP9600_TYPE_K);
+        // mcp[i]->setFilterCoefficient(3);
+        // mcp[i]->setAlertTemperature(1, 30);
+        // mcp[i]->configureAlert(1, true, true);
+        // mcp[i]->enable(true);
     }
 
+    log("finish mcp thermo setup");
     // set IMU interrupts
     pinMode(TEENSY_PIN_ACEL_INTERRUPT, INPUT);
     pinMode(TEENSY_PIN_GYRO_INTERRUPT, INPUT_PULLDOWN);
@@ -224,21 +229,22 @@ void SensorManager::loop() {
     }
 
     // ONBOARD ANALOG =============================================================================
-    rowLock.unlock();
+    rowLock.lock();
     row.susp_pot_RL = analogRead(TEENSY_PIN_SUSPOT_RL);
     row.susp_pot_RR = analogRead(TEENSY_PIN_SUSPOT_RR);
     row.rad_in = analogRead(TEENSY_PIN_RAD_IN);
     row.rad_out = analogRead(TEENSY_PIN_RAD_OUT);
     row.oil_temp = analogRead(TEENSY_PIN_OIL_TEMP);
     row.analog_millis = millis();
-    rowLock.lock();
+    rowLock.unlock();
 
     // THERMOCOUPLE ===============================================================================
-    rowLock.unlock();
-    row.thermo_1 = mcp[0].readThermocouple() * 1000;
-    row.thermo_2 = mcp[1].readThermocouple() * 1000;
-    row.thermo_3 = mcp[2].readThermocouple() * 1000;
-    row.thermo_4 = mcp[3].readThermocouple() * 1000;
-    row.thermo_millis = millis();
-    rowLock.lock();
+    // rowLock.unlock();
+    // row.thermo_1 = mcp[0]->readThermocouple() * 1000;
+    // row.thermo_2 = mcp[1]->readThermocouple() * 1000;
+    // row.thermo_3 = mcp[2]->readThermocouple() * 1000;
+    // row.thermo_4 = mcp[3]->readThermocouple() * 1000;
+    // for (int i=0; i<4; i++) Serial.println(mcp[i]->readThermocouple());
+    // row.thermo_millis = millis();
+    // rowLock.lock();
 }

@@ -21,12 +21,12 @@
 #define SENSOR_CAN_ID_RAD_OUT       0x100 + 6
 #define SENSOR_CAN_ID_STEERING      0x100 + 7
 
-#define THERMOCOUPLE_I2C_BUS        Wire2
+#define THERMOCOUPLE_I2C_BUS        Wire1
 
-#define THERMOCOUPLE_1_ID           0x60
-#define THERMOCOUPLE_2_ID           0x61
-#define THERMOCOUPLE_3_ID           0x62
-#define THERMOCOUPLE_4_ID           0x63
+#define THERMOCOUPLE_1_ID           0x64
+#define THERMOCOUPLE_2_ID           0x65
+#define THERMOCOUPLE_3_ID           0x66
+#define THERMOCOUPLE_4_ID           0x67
 
 #define TEENSY_PIN_GENERIC_0        0
 #define TEENSY_PIN_GENERIC_1        1

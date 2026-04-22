@@ -17,6 +17,10 @@ public:
     SensorManager(Row& row, Threads::Mutex& lock) :
         row(row), rowLock(lock), accel(TEENSY_IMU_WIRE, TEENSY_ACEL_REG), gyro(TEENSY_IMU_WIRE, TEENSY_GYRO_REG),
         megaCAN(ECU_BASE_CAN_ID)  {
+
+            for (int i=0; i<4; i++) {
+                mcp[i] = new Adafruit_MCP9600();
+            }
         // ...
     }
     void loop();
@@ -34,7 +38,7 @@ private:
     Row& row;
     Threads::Mutex& rowLock;
 
-    Adafruit_MCP9600 mcp[4];
+    Adafruit_MCP9600* mcp[4];
 
     Ambient_Resolution ambientRes = RES_ZERO_POINT_0625;
 };
