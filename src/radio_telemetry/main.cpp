@@ -42,8 +42,8 @@ void setup() {
 
 void loop() {
   if (rf95.available()) {
-    uint8_t buf[196];
-    uint8_t len = 196;
+    uint8_t buf[(4*53) + 3 + 1];
+    uint8_t len = (4*53) + 3 + 1;
 
     if (rf95.recv(buf, &len)) {
       digitalWrite(LED_BUILTIN, HIGH);    

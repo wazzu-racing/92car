@@ -21,7 +21,12 @@
 #define SENSOR_CAN_ID_RAD_OUT       0x100 + 6
 #define SENSOR_CAN_ID_STEERING      0x100 + 7
 
-#define THERMOCOUPLE_I2C_BUS        Wire2
+#define THERMOCOUPLE_I2C_BUS        Wire1
+
+#define THERMOCOUPLE_1_ID           0x64
+#define THERMOCOUPLE_2_ID           0x65
+#define THERMOCOUPLE_3_ID           0x66
+#define THERMOCOUPLE_4_ID           0x67
 
 #define TEENSY_PIN_GENERIC_0        0
 #define TEENSY_PIN_GENERIC_1        1
@@ -38,7 +43,7 @@
 #define TEENSY_PIN_SCREEN_RST       12
 #define TEENSY_PIN_SCREEN_SCK       13
 #define TEENSY_PIN_RAD_OUT          14
-#define TEENSY_PIN_GENERIC_15       15
+#define TEENSY_PIN_OIL_TEMP         15
 #define TEENSY_PIN_SEGMENT_SCL      16
 #define TEENSY_PIN_SEGMENT_SDA      17
 
