@@ -27,6 +27,7 @@ public:
     void setup();
 
 private:
+    bool gps_enabled = false;
     SFE_UBLOX_GNSS gps;
     Bmi088Accel accel;
     Bmi088Gyro gyro;

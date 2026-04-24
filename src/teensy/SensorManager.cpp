@@ -19,12 +19,14 @@ void SensorManager::setup() {
 
     if (gps.begin(TEENSY_GPS_WIRE) == false) { //Connect to the u-blox module using Wire port {
         log("error with GPS... cannot connect...");
-        while (1);
+        gps_enabled = false;
+    } else {
+        log("gps connected...");
+        gps.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+        gps.setNavigationFrequency(1);
+        gps.setAutoPVT(true);
+        gps_enabled = true;
     }
-    log("gps connected...");
-    gps.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-    gps.setNavigationFrequency(1);
-    gps.setAutoPVT(true);
 
     if (accel.begin() < 0 || gyro.begin() < 0) {
         log("error with IMU... cannot connect...");
@@ -124,7 +126,7 @@ void SensorManager::loop() {
         rowLock.unlock();
     }
 
-    if ((gps.getPVT(1) && (gps.getInvalidLlh() == false))) {
+    if (gps_enabled && (gps.getPVT(1) && (gps.getInvalidLlh() == false))) {
         // log("gps!");
 
         rowLock.lock();
@@ -132,9 +134,9 @@ void SensorManager::loop() {
         row.lat           =  gps.getLatitude();
         row.lon           =  gps.getLongitude();
         row.elev          =  gps.getAltitude();
-        row.ground_speed  =  gps.getGroundSpeed();	
+        row.ground_speed  =  gps.getGroundSpeed();
         row.gps_millis    = millis();
-        rowLock.unlock();   
+        rowLock.unlock();
     }
     // else {
     //     log("no gps");
