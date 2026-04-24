@@ -14,10 +14,10 @@ void DataloggerManager::setup() {
     // year-month-day-hour:minute:second
 
     int i = 0;
-    while (SD.exists((String(i) + ".bin").c_str())) {
+    while (SD.exists((String(i) + ".wr").c_str())) {
       i++;
     }
-    file = SD.open((String(i) + ".bin").c_str(), FILE_WRITE);
+    file = SD.open((String(i) + ".wr").c_str(), FILE_WRITE);
 }
 
 void DataloggerManager::loop() {
@@ -48,7 +48,7 @@ void DataloggerManager::loop() {
         if (rowBuffer[rowBuffer_i].unixtime >= JAN_1_2025) {
             struct tm *t = gmtime((time_t*)&rowBuffer[rowBuffer_i].unixtime);
             char buf[32];
-            strftime(buf, sizeof(buf), "%Y-%m-%d_%H:%M:%S.bin", t);
+            strftime(buf, sizeof(buf), "%Y-%m-%d_%H:%M:%S.wr", t);
             file.rename(buf);
             hasBeenRenamed = true;
         }
