@@ -38,6 +38,37 @@ void setup() {
   }
 
   rf95.setTxPower(RF95_TX, false);
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+  Serial.println("Setup!!!");
+
 }
 
 void loop() {
