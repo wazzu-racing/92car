@@ -17,6 +17,7 @@ public:
 private:
     SdFat SD;
     File32 file;
+    char currentFileName[16];
     bool hasBeenRenamed = false;
 
     Row rowBuffer[DATALOG_SD_BUFFER];

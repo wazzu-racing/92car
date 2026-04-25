@@ -17,7 +17,8 @@ void DataloggerManager::setup() {
     while (SD.exists((String(i) + ".wr").c_str())) {
       i++;
     }
-    file = SD.open((String(i) + ".wr").c_str(), FILE_WRITE);
+    snprintf(currentFileName, sizeof(currentFileName), "%d.wr", i);
+    file = SD.open(currentFileName, FILE_WRITE);
 }
 
 void DataloggerManager::loop() {
@@ -48,9 +49,19 @@ void DataloggerManager::loop() {
         if (rowBuffer[rowBuffer_i].unixtime >= JAN_1_2025) {
             struct tm *t = gmtime((time_t*)&rowBuffer[rowBuffer_i].unixtime);
             char buf[32];
-            strftime(buf, sizeof(buf), "%Y-%m-%d_%H:%M:%S.wr", t);
-            file.rename(buf);
-            hasBeenRenamed = true;
+            strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S.wr", t);
+            
+            file.close();
+            if (SD.rename(currentFileName, buf)) {
+                log("Renamed log file to " + std::string(buf));
+                hasBeenRenamed = true;
+                // Reopen in append mode
+                file = SD.open(buf, FILE_WRITE);
+            } else {
+                log("Failed to rename log file!");
+                // Reopen original so we don't lose data
+                file = SD.open(currentFileName, FILE_WRITE);
+            }
         }
     }
 
