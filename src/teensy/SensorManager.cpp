@@ -52,7 +52,7 @@ void SensorManager::setup() {
     log("end thermo");
 
     for (int i=0; i<4; i++) {
-        // // mcp[i] = 
+        // // mcp[i] =
         // mcp[i]->setAmbientResolution(ambientRes);
         // mcp[i]->setADCresolution(MCP9600_ADCRESOLUTION_18);
         // mcp[i]->setThermocoupleType(MCP9600_TYPE_K);
@@ -97,7 +97,7 @@ void SensorManager::setup() {
 void SensorManager::loop() {
     // accelerometer of IMU =======================================================================
     if (accel_updated) {
-        log("accel!!");
+        // log("accel!!");
         accel_updated = false;
 
         accel.readSensor();
@@ -113,7 +113,7 @@ void SensorManager::loop() {
 
     // gyroscope of IMU ===========================================================================
     if (gyro_updated) {
-        log("imu!");
+        // log("imu!");
         gyro_updated = false;
 
         gyro.readSensor();
@@ -144,6 +144,17 @@ void SensorManager::loop() {
 
     // ECU CAN ====================================================================================
     while (can_ecu.read(msg)) {
+        log("Reading CAN data");
+
+        // Defensive: only handle known ECU IDs (optional, expand this if you expect more)
+        uint32_t relid = msg.id - ECU_BASE_CAN_ID;
+        if (relid > 7) { log("ECU CAN RX: unknown ID, ignored"); continue; }
+
+        // Basic validation: drop frames that are not standard length, or are too short
+        if (msg.len < 8) {
+            warning("ECU CAN RX: frame too short, ignoring");
+            continue;
+        }
         // log("message from can!!");
         // Serial.println(msg.id);
         // if (msg.flags.extended) continue;
@@ -229,7 +240,7 @@ void SensorManager::loop() {
 
     // ONBOARD ANALOG =============================================================================
     rowLock.lock();
-    log("analog...");
+    // log("analog...");
     row.susp_pot_RL = analogRead(TEENSY_PIN_SUSPOT_RL);
     row.susp_pot_RR = analogRead(TEENSY_PIN_SUSPOT_RR);
     row.rad_in = analogRead(TEENSY_PIN_RAD_IN);

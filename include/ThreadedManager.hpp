@@ -8,7 +8,7 @@ class ThreadedManager {
 
     volatile bool KEEP_RUNNING;
     volatile bool blink = false;
-
+    uint8_t managerId = 0;
 
     virtual void loop() = 0;
     virtual void setup() = 0;
@@ -17,6 +17,11 @@ class ThreadedManager {
 
 protected:
     void log(std::string data);
+    void warning(std::string data);
+
+    // Hook for log line forwarding to SD (set by DataloggerManager at runtime)
+    static void (*logToSdHook)(const std::string&);
+
 
 public:
     void start(std::string logname);
