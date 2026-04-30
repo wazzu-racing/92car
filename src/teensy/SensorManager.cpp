@@ -1,15 +1,14 @@
 #include "SensorManager.hpp"
 
-volatile bool gps_updated = false;
+// volatile bool gps_updated = false;
 volatile bool accel_updated = false;
 volatile bool gyro_updated = false;
 
-static CAN_message_t msg;
 static MegaCAN_broadcast_message_t ecu;
 
 void gyro_ISR() {gyro_updated = true;}
 void accel_ISR() {accel_updated = true;}
-void gps_ISR() {gps_updated = true;}
+// void gps_ISR() {gps_updated = true;}
 
 void SensorManager::setup() {
     log("Setup SensorManager");
@@ -69,19 +68,19 @@ void SensorManager::setup() {
     pinMode(TEENSY_PIN_GPS_INTERRUPT, INPUT_PULLDOWN);
     attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_ACEL_INTERRUPT), accel_ISR, RISING);
     attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GYRO_INTERRUPT), gyro_ISR, RISING);
-    attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
+    // attachInterrupt(digitalPinToInterrupt(TEENSY_PIN_GPS_INTERRUPT), gps_ISR, RISING);
 
     log("setup IMU interrupts");
 
-    // setup ECU CAN interrupt
-    can_ecu.begin();
-    can_ecu.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
-    can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
-    can_ecu.enableFIFO();
-    can_ecu.setFIFOFilter(ACCEPT_ALL); // or specific IDs
-    can_ecu.mailboxStatus();
+    // // setup ECU CAN interrupt
+    // can_ecu.begin();
+    // can_ecu.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
+    // can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
+    // can_ecu.enableFIFO();
+    // // can_ecu.setFIFOFilter(ACCEPT_ALL); // or specific IDs
+    // can_ecu.mailboxStatus();
 
-    log("set up can ecu interrupts");
+    // log("set up can ecu interrupts");
 
     // setup sensor CAN interrupt
     can_sensor.begin();
@@ -95,6 +94,8 @@ void SensorManager::setup() {
 }
 
 void SensorManager::loop() {
+      digitalWrite(TEENSY_PIN_LED_2, ((millis()/1000) % 2 == 0) ? LOW : HIGH);
+
     // accelerometer of IMU =======================================================================
     if (accel_updated) {
         // log("accel!!");
@@ -138,77 +139,66 @@ void SensorManager::loop() {
         row.gps_millis    = millis();
         rowLock.unlock();
     }
-    // else {
-    //     log("no gps");
-    // }
+    else {
+        log("no gps");
+    }
 
     // ECU CAN ====================================================================================
-    while (can_ecu.read(msg)) {
-        log("Reading CAN data");
-
-        // Defensive: only handle known ECU IDs (optional, expand this if you expect more)
-        uint32_t relid = msg.id - ECU_BASE_CAN_ID;
-        if (relid > 7) { log("ECU CAN RX: unknown ID, ignored"); continue; }
-
-        // Basic validation: drop frames that are not standard length, or are too short
-        if (msg.len < 8) {
-            warning("ECU CAN RX: frame too short, ignoring");
-            continue;
-        }
-        // log("message from can!!");
-        // Serial.println(msg.id);
-        // if (msg.flags.extended) continue;
-
-        megaCAN.getBCastData(msg.id, msg.buf, ecu);
-
-        // Serial.print("RPM:\t\t\t");Serial.print(ecu.rpm);Serial.println("\tRPM");
-        // Serial.print("Time:\t\t\t");Serial.print(ecu.seconds);Serial.println("\tseconds");
-        // Serial.print("AFR1:\t\t\t");Serial.print(ecu.AFR1);Serial.println("\tAFR");
-        // Serial.print("spark advance:\t\t");Serial.print(ecu.adv_deg);Serial.println("\tdeg BTDC");
-        // Serial.print("barometric pressure:\t");Serial.print(ecu.baro);Serial.println("\tkPa");
-        // Serial.print("manifold pressure:\t");Serial.print(ecu.map);Serial.println("\tkPa");
-        // Serial.print("manifold temp:\t\t");Serial.print(ecu.mat);Serial.println("\tdeg F");
-        // Serial.print("coolant temp:\t\t");Serial.print(ecu.clt);Serial.println("\tdeg F");
-        // Serial.print("throttle position:\t");Serial.print(ecu.tps);Serial.println("\t%");
-        // Serial.print("battery voltage:\t");Serial.print(ecu.batt);Serial.println("\tV");
-        // Serial.print("oil pressure (egov2):\t");Serial.print(ecu.sensors1);Serial.println("\t");
-        // Serial.print("sync loss counter:\t");Serial.print(ecu.synccnt);Serial.println("\tcount");
-        // Serial.print("sync reason:\t\t");Serial.print(ecu.syncreason);Serial.println("\t(code)");
-        // Serial.print("launch control timing:\t");Serial.print(ecu.launch_timing);Serial.println("\tdeg");
-        // Serial.print("VE1:\t\t\t");Serial.print(ecu.ve1);Serial.println("\t%");
-        // Serial.print("VE2:\t\t\t");Serial.print(ecu.ve2);Serial.println("\t%");
-        // Serial.print("EGT:\t\t\t");Serial.print(ecu.egt1);Serial.println("\tdeg F");
-        // Serial.print("Mass air flow:\t\t");Serial.print(ecu.MAF);Serial.println("\tg/s");
-        // Serial.print("Intake air temp:\t");Serial.print(ecu.airtemp);Serial.println("\tdeg F");
-        // Serial.print("Gear:\t\t\t");Serial.print(ecu.gear);Serial.println("\t");
-        // Serial.print("\n\n");Serial.println("\t()");
-        // Serial.println(millis());
+    // digitalWrite(TEENSY_PIN_LED_0, HIGH);
+    CAN_message_t msg;
 
 
-        rowLock.lock();
-        row.rpm             = ecu.rpm;
-        row.time            = ecu.seconds;
-        // row.quickshift      = ecu.
-        row.afr             = ecu.AFR1          * 1000;
-        row.fuelload        = ecu.fuelload      * 1000;
-        row.spark_advance   = ecu.adv_deg       * 1000;
-        row.baro            = ecu.baro          * 1000;
-        row.map             = ecu.map           * 1000;
-        row.mat             = ecu.mat           * 1000;
-        row.clnt_temp       = ecu.clt           * 1000;
-        row.tps             = ecu.tps           * 1000;
-        row.batt            = ecu.batt          * 1000;
-        row.oil_press       = ecu.sensors1      * 1000;
-        row.syncloss_count  = ecu.synccnt;
-        row.syncloss_code   = ecu.syncreason;
-        row.ltcl_timing     = ecu.launch_timing * 1000;
-        row.ve1             = ecu.ve1           * 1000;
-        row.ve2             = ecu.ve2           * 1000;
-        row.maf             = ecu.MAF           * 1000;
-        row.in_temp         = ecu.airtemp       * 1000;
-        row.ecu_millis      = millis();
-        rowLock.unlock();
-    }
+
+    // int count = 0;
+    // can_ecu.events();
+    // while (can_ecu.read(msg)) {
+    //     threads.delay(100)
+    //     if (count++ > 20) {
+    //         digitalWrite(TEENSY_PIN_LED_3, HIGH);
+    //     }
+        
+
+    // //     // if (msg.flags.extended) continue;
+    // //     // log("Reading CAN data");
+
+    // //     // // Defensive: only handle known ECU IDs (optional, expand this if you expect more)
+    // //     // uint32_t relid = msg.id - ECU_BASE_CAN_ID;
+    // //     // if (relid > 7) { log("ECU CAN RX: unknown ID, ignored"); continue; }
+
+    // //     // // Basic validation: drop frames that are not standard length, or are too short
+    // //     // if (msg.len < 8) {
+    // //     //     warning("ECU CAN RX: frame too short, ignoring");
+    // //     //     continue;
+    // //     // }
+
+
+    // //     // megaCAN.getBCastData(msg.id, msg.buf, ecu);
+
+    // //     // rowLock.lock();
+    // //     // row.rpm             = ecu.rpm;
+    // //     // row.time            = ecu.seconds;
+    // //     // // row.quickshift      = ecu.
+    // //     // row.afr             = ecu.AFR1          * 1000;
+    // //     // row.fuelload        = ecu.fuelload      * 1000;
+    // //     // row.spark_advance   = ecu.adv_deg       * 1000;
+    // //     // row.baro            = ecu.baro          * 1000;
+    // //     // row.map             = ecu.map           * 1000;
+    // //     // row.mat             = ecu.mat           * 1000;
+    // //     // row.clnt_temp       = ecu.clt           * 1000;
+    // //     // row.tps             = ecu.tps           * 1000;
+    // //     // row.batt            = ecu.batt          * 1000;
+    // //     // row.oil_press       = ecu.sensors1      * 1000;
+    // //     // row.syncloss_count  = ecu.synccnt;
+    // //     // row.syncloss_code   = ecu.syncreason;
+    // //     // row.ltcl_timing     = ecu.launch_timing * 1000;
+    // //     // row.ve1             = ecu.ve1           * 1000;
+    // //     // row.ve2             = ecu.ve2           * 1000;
+    // //     // row.maf             = ecu.MAF           * 1000;
+    // //     // row.in_temp         = ecu.airtemp       * 1000;
+    // //     // row.ecu_millis      = millis();
+    // //     // rowLock.unlock();
+    // }
+    // digitalWrite(TEENSY_PIN_LED_0, LOW);
 
     // Sensor CAN =================================================================================
     can_sensor.events();
