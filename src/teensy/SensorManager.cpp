@@ -72,15 +72,15 @@ void SensorManager::setup() {
 
     log("setup IMU interrupts");
 
-    // // setup ECU CAN interrupt
-    // can_ecu.begin();
-    // can_ecu.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
-    // can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
-    // can_ecu.enableFIFO();
-    // // can_ecu.setFIFOFilter(ACCEPT_ALL); // or specific IDs
-    // can_ecu.mailboxStatus();
+    // setup ECU CAN interrupt
+    can_ecu.begin();
+    can_ecu.setBaudRate(500000); //set to 500000 for normal Megasquirt usage - need to change Megasquirt firmware to change MS CAN baud rate
+    can_ecu.setMaxMB(16); //sets maximum number of mailboxes for FlexCAN_T4 usage
+    can_ecu.enableFIFO();
+    // can_ecu.setFIFOFilter(ACCEPT_ALL); // or specific IDs
+    can_ecu.mailboxStatus();
 
-    // log("set up can ecu interrupts");
+    log("set up can ecu interrupts");
 
     // setup sensor CAN interrupt
     can_sensor.begin();
@@ -147,56 +147,68 @@ void SensorManager::loop() {
     // digitalWrite(TEENSY_PIN_LED_0, HIGH);
     CAN_message_t msg;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // CAN_error_t err = can_ecu.error();
 
+    // if (err & BUS_OFF) {
+    //     warning("CAN BUS OFF");
+
+    //     can_ecu.reset();
+
+    //     can_ecu.begin();
+    //     can_ecu.setBaudRate(500000);
+    //     can_ecu.setMaxMB(16);
+    //     can_ecu.enableFIFO();
+    //     can_ecu.setFIFOFilter(ACCEPT_ALL);
+    // }
 
     // int count = 0;
     // can_ecu.events();
     // while (can_ecu.read(msg)) {
-    //     threads.delay(100)
     //     if (count++ > 20) {
     //         digitalWrite(TEENSY_PIN_LED_3, HIGH);
     //     }
         
 
-    // //     // if (msg.flags.extended) continue;
-    // //     // log("Reading CAN data");
+    //     if (msg.flags.extended) continue;
+    //     log("Reading CAN data");
 
-    // //     // // Defensive: only handle known ECU IDs (optional, expand this if you expect more)
-    // //     // uint32_t relid = msg.id - ECU_BASE_CAN_ID;
-    // //     // if (relid > 7) { log("ECU CAN RX: unknown ID, ignored"); continue; }
+    //     // Defensive: only handle known ECU IDs (optional, expand this if you expect more)
+    //     uint32_t relid = msg.id - ECU_BASE_CAN_ID;
+    //     if (relid > 7) { log("ECU CAN RX: unknown ID, ignored"); continue; }
 
-    // //     // // Basic validation: drop frames that are not standard length, or are too short
-    // //     // if (msg.len < 8) {
-    // //     //     warning("ECU CAN RX: frame too short, ignoring");
-    // //     //     continue;
-    // //     // }
+    //     // Basic validation: drop frames that are not standard length, or are too short
+    //     if (msg.len < 8) {
+    //         warning("ECU CAN RX: frame too short, ignoring");
+    //         continue;
+    //     }
 
 
-    // //     // megaCAN.getBCastData(msg.id, msg.buf, ecu);
+    //     megaCAN.getBCastData(msg.id, msg.buf, ecu);
 
-    // //     // rowLock.lock();
-    // //     // row.rpm             = ecu.rpm;
-    // //     // row.time            = ecu.seconds;
-    // //     // // row.quickshift      = ecu.
-    // //     // row.afr             = ecu.AFR1          * 1000;
-    // //     // row.fuelload        = ecu.fuelload      * 1000;
-    // //     // row.spark_advance   = ecu.adv_deg       * 1000;
-    // //     // row.baro            = ecu.baro          * 1000;
-    // //     // row.map             = ecu.map           * 1000;
-    // //     // row.mat             = ecu.mat           * 1000;
-    // //     // row.clnt_temp       = ecu.clt           * 1000;
-    // //     // row.tps             = ecu.tps           * 1000;
-    // //     // row.batt            = ecu.batt          * 1000;
-    // //     // row.oil_press       = ecu.sensors1      * 1000;
-    // //     // row.syncloss_count  = ecu.synccnt;
-    // //     // row.syncloss_code   = ecu.syncreason;
-    // //     // row.ltcl_timing     = ecu.launch_timing * 1000;
-    // //     // row.ve1             = ecu.ve1           * 1000;
-    // //     // row.ve2             = ecu.ve2           * 1000;
-    // //     // row.maf             = ecu.MAF           * 1000;
-    // //     // row.in_temp         = ecu.airtemp       * 1000;
-    // //     // row.ecu_millis      = millis();
-    // //     // rowLock.unlock();
+    //     rowLock.lock();
+    //     row.rpm             = ecu.rpm;
+    //     row.time            = ecu.seconds;
+    //     // row.quickshift      = ecu.
+    //     row.afr             = ecu.AFR1          * 1000;
+    //     row.fuelload        = ecu.fuelload      * 1000;
+    //     row.spark_advance   = ecu.adv_deg       * 1000;
+    //     row.baro            = ecu.baro          * 1000;
+    //     row.map             = ecu.map           * 1000;
+    //     row.mat             = ecu.mat           * 1000;
+    //     row.clnt_temp       = ecu.clt           * 1000;
+    //     row.tps             = ecu.tps           * 1000;
+    //     row.batt            = ecu.batt          * 1000;
+    //     row.oil_press       = ecu.sensors1      * 1000;
+    //     row.syncloss_count  = ecu.synccnt;
+    //     row.syncloss_code   = ecu.syncreason;
+    //     row.ltcl_timing     = ecu.launch_timing * 1000;
+    //     row.ve1             = ecu.ve1           * 1000;
+    //     row.ve2             = ecu.ve2           * 1000;
+    //     row.maf             = ecu.MAF           * 1000;
+    //     row.in_temp         = ecu.airtemp       * 1000;
+    //     row.ecu_millis      = millis();
+    //     rowLock.unlock();
     // }
     // digitalWrite(TEENSY_PIN_LED_0, LOW);
 
@@ -206,22 +218,22 @@ void SensorManager::loop() {
         rowLock.lock();
         switch (msg.id) {
             case SENSOR_CAN_ID_AMBAIR:
-                row.amb_air_temp = (int)*msg.buf;
+                memcpy(&row.amb_air_temp, msg.buf, sizeof(int));
                 break;
             case SENSOR_CAN_ID_BRAKE_1:
-                row.brake1 = (int)*msg.buf;
+                memcpy(&row.brake1, msg.buf, sizeof(int));
                 break;
             case SENSOR_CAN_ID_BRAKE_2:
-                row.brake2 = (int)*msg.buf;
+                memcpy(&row.brake2, msg.buf, sizeof(int));
                 break;
             case SENSOR_CAN_ID_SUSPOT_FL:
-                row.susp_pot_FL = (int)*msg.buf;
+                memcpy(&row.susp_pot_FL, msg.buf, sizeof(int));
                 break;
             case SENSOR_CAN_ID_SUSPOT_FR:
-                row.susp_pot_FR = (int)*msg.buf;
+                memcpy(&row.susp_pot_FR, msg.buf, sizeof(int));
                 break;
             case SENSOR_CAN_ID_STEERING:
-                row.steering = (int)*msg.buf;
+                memcpy(&row.steering, msg.buf, sizeof(int));
                 break;
         }
         row.breakout_millis = millis();
